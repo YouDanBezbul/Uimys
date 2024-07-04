@@ -35,7 +35,7 @@ local f1Button = Instance.new("ImageButton")
 f1Button.Name = "F1Button"
 f1Button.Size = UDim2.new(1, 0, 1, 0)
 f1Button.BackgroundTransparency = 1
-f1Button.Image = "rbxassetid://18178907955 "  -- Thay đổi ID này thành ID của icon bạn muốn sử dụng
+f1Button.Image = "rbxassetid://18331652497 "  -- Thay đổi ID này thành ID của icon bạn muốn sử dụng
 f1Button.Parent = keyboardFrame
 
 -- Hàm để mô phỏng nhấn phím F1
