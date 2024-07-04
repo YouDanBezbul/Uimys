@@ -1,1 +1,111 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/YouDanBezbul/Ep/main/Mainchinh"))()
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
+-- Tạo ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "KeyboardGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Tạo khung ngoài để kéo thả
+local dragFrame = Instance.new("Frame")
+dragFrame.Name = "DragFrame"
+dragFrame.Size = UDim2.new(0, 40, 0, 40)
+dragFrame.Position = UDim2.new(1, -110, 1, -110)
+dragFrame.BackgroundTransparency = 0.5
+dragFrame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+dragFrame.BorderSizePixel = 0
+dragFrame.Parent = screenGui
+
+-- Bo tròn cho dragFrame
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0.2, 0)
+uiCorner.Parent = dragFrame
+
+-- Tạo khung trong chứa nút F1
+local keyboardFrame = Instance.new("Frame")
+keyboardFrame.Name = "KeyboardFrame"
+keyboardFrame.Size = UDim2.new(0.8, 0, 0.8, 0)
+keyboardFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
+keyboardFrame.BackgroundTransparency = 1
+keyboardFrame.Parent = dragFrame
+
+-- Tạo nút F1
+local f1Button = Instance.new("ImageButton")
+f1Button.Name = "F1Button"
+f1Button.Size = UDim2.new(1, 0, 1, 0)
+f1Button.BackgroundTransparency = 1
+f1Button.Image = "rbxassetid://6034925618"  -- Thay đổi ID này thành ID của icon bạn muốn sử dụng
+f1Button.Parent = keyboardFrame
+
+-- Hàm để mô phỏng nhấn phím F1
+local function simulateF1KeyPress()
+    local virtualInputManager = game:GetService("VirtualInputManager")
+    virtualInputManager:SendKeyEvent(true, Enum.KeyCode.F1, false, game)
+    wait(0.1)
+    virtualInputManager:SendKeyEvent(false, Enum.KeyCode.F1, false, game)
+end
+
+-- Xử lý sự kiện khi nhấn nút trên GUI
+f1Button.MouseButton1Click:Connect(function()
+    f1Button.ImageTransparency = 0.5
+    simulateF1KeyPress()
+    wait(0.1)
+    f1Button.ImageTransparency = 0
+end)
+
+-- Biến để theo dõi trạng thái kéo thả
+local isDragging = false
+local dragStart
+local startPos
+
+-- Hàm để bắt đầu kéo thả
+local function startDrag(input)
+    isDragging = true
+    dragStart = input.Position
+    startPos = dragFrame.Position
+    
+    input.Changed:Connect(function()
+        if input.UserInputState == Enum.UserInputState.End then
+            isDragging = false
+        end
+    end)
+end
+
+-- Hàm để cập nhật vị trí khi kéo thả
+local function updateDrag(input)
+    if isDragging then
+        local delta = input.Position - dragStart
+        dragFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end
+
+-- Kết nối các sự kiện kéo thả
+dragFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+       input.UserInputType == Enum.UserInputType.Touch then
+        startDrag(input)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or
+       input.UserInputType == Enum.UserInputType.Touch then
+        updateDrag(input)
+    end
+end)
+
+-- Điều chỉnh kích thước và vị trí cho mobile
+local function adjustForMobile()
+    if UserInputService.TouchEnabled then
+        dragFrame.Size = UDim2.new(0, 50, 0, 50)
+        dragFrame.Position = UDim2.new(1, -940, 1, -510)
+    end
+end
+
+adjustForMobile()
