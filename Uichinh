@@ -1,2404 +1,1635 @@
+--[[
+    Open Aimbot
+    Universal Open Source Aimbot
+    Release 1.8.2
+
+    twix.cyou/pix
+    twix.cyou/OpenAimbotV3rm
+
+    Author: ttwiz_z (ttwizz)
+    License: MIT
+    GitHub: https://github.com/ttwizz/Open-Aimbot
+
+    Issues: https://github.com/ttwizz/Open-Aimbot/issues
+    Pull requests: https://github.com/ttwizz/Open-Aimbot/pulls
+    Discussions: https://github.com/ttwizz/Open-Aimbot/discussions
+
+    Wiki: https://moderka.org/Open-Aimbot
+]]
+
+
+--! Debugging
+
+local DEBUG = false
+
+if DEBUG then
+    getfenv().getfenv = function()
+        return setmetatable({}, { __index = function() return function() return true end end })
+    end
+end
+
+
+--! Services
+
 local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
-loadstring(game:HttpGet('https://raw.githubusercontent.com/YouDanBezbul/Uimys/main/Uichinh'))()
 
--- Importing Configuration
+--! Colour Handler
+
+local function PackColour(Colour)
+    return typeof(Colour) == "Color3" and { R = Colour.R * 255, G = Colour.G * 255, B = Colour.B * 255 } or typeof(Colour) == "table" and Colour or { R = 255, G = 255, B = 255 }
+end
+
+local function UnpackColour(Colour)
+    return typeof(Colour) == "table" and Color3.fromRGB(Colour.R, Colour.G, Colour.B) or typeof(Colour) == "Color3" and Colour or Color3.fromRGB(255, 255, 255)
+end
+
+
+--! Importing Configuration
+
 local ImportedConfiguration = {}
 
 pcall(function()
-    if getfenv().isfile and getfenv().readfile and getfenv().isfile(string.format("%s.ttwizz", game.GameId)) and getfenv().readfile(string.format("%s.ttwizz", game.GameId)) then
+    if not DEBUG and getfenv().isfile and getfenv().readfile and getfenv().isfile(string.format("%s.ttwizz", game.GameId)) and getfenv().readfile(string.format("%s.ttwizz", game.GameId)) then
         ImportedConfiguration = HttpService:JSONDecode(getfenv().readfile(string.format("%s.ttwizz", game.GameId)))
+        for Key, Value in next, ImportedConfiguration do
+            if Key == "FoVColour" or Key == "ESPColour" then
+                ImportedConfiguration[Key] = UnpackColour(Value)
+            end
+        end
     end
 end)
 
--- Initializing Configuration
-local Configuration = {
-    Khungxuong = ImportedConfiguration["Khung xương"] or false,
-    Hop2d = ImportedConfiguration["Hộp 2D"] or false,
-    Thanhmau = ImportedConfiguration["Thanh máu"] or false,
-    Hienten = ImportedConfiguration["Hiển thị tên"] or false,
-    TracersPosition = ImportedConfiguration["TracersPosition"] or "Dưới",
-    High = ImportedConfiguration["Highlight"] or false,
-    Box3 = ImportedConfiguration["Box3d"] or false,
-    Dinhvido = ImportedConfiguration["Dinhvido"] or false,
-    Aim = ImportedConfiguration["Aim"] or false,
-    AimS = ImportedConfiguration["Aim"] or false
-}
 
--- Fluent UI Library
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+--! Initializing Configuration
+
+local Configuration = {}
+
+--? Aimbot
+
+Configuration.Aimbot = ImportedConfiguration["Aimbot"] or false
+Configuration.OnePressAimingMode = ImportedConfiguration["OnePressAimingMode"] or false
+Configuration.UseMouseMoving = ImportedConfiguration["UseMouseMoving"] or false
+Configuration.AimKey = ImportedConfiguration["AimKey"] or "RMB"
+Configuration.AimPartDropdownValues = ImportedConfiguration["AimPartDropdownValues"] or { "Head", "HumanoidRootPart" }
+Configuration.AimPart = ImportedConfiguration["AimPart"] or "HumanoidRootPart"
+Configuration.RandomAimPart = ImportedConfiguration["RandomAimPart"] or false
+Configuration.UseOffset = ImportedConfiguration["UseOffset"] or false
+Configuration.OffsetType = ImportedConfiguration["OffsetType"] or "Static"
+Configuration.StaticOffsetIncrement = ImportedConfiguration["StaticOffsetIncrement"] or 10
+Configuration.DynamicOffsetIncrement = ImportedConfiguration["DynamicOffsetIncrement"] or 10
+Configuration.AutoOffset = ImportedConfiguration["AutoOffset"] or false
+Configuration.MaxAutoOffset = ImportedConfiguration["MaxAutoOffset"] or 50
+Configuration.UseSensitivity = ImportedConfiguration["UseSensitivity"] or false
+Configuration.Sensitivity = ImportedConfiguration["Sensitivity"] or 100
+Configuration.UseNoise = ImportedConfiguration["UseNoise"] or false
+Configuration.TriggerBot = ImportedConfiguration["TriggerBot"] or false
+Configuration.OnePressTriggeringMode = ImportedConfiguration["OnePressTriggeringMode"] or false
+Configuration.SmartTriggerBot = ImportedConfiguration["SmartTriggerBot"] or false
+Configuration.TriggerKey = ImportedConfiguration["TriggerKey"] or "V"
+Configuration.TeamCheck = ImportedConfiguration["TeamCheck"] or false
+Configuration.FriendCheck = ImportedConfiguration["FriendCheck"] or false
+Configuration.WallCheck = ImportedConfiguration["WallCheck"] or false
+Configuration.WaterCheck = ImportedConfiguration["WaterCheck"] or false
+Configuration.FoVCheck = ImportedConfiguration["FoVCheck"] or false
+Configuration.FoVRadius = ImportedConfiguration["FoVRadius"] or 100
+Configuration.MagnitudeCheck = ImportedConfiguration["MagnitudeCheck"] or false
+Configuration.TriggerMagnitude = ImportedConfiguration["TriggerMagnitude"] or 500
+Configuration.TransparencyCheck = ImportedConfiguration["TransparencyCheck"] or false
+Configuration.IgnoredTransparency = ImportedConfiguration["IgnoredTransparency"] or 0.5
+Configuration.WhitelistedGroupCheck = ImportedConfiguration["WhitelistedGroupCheck"] or false
+Configuration.WhitelistedGroup = ImportedConfiguration["WhitelistedGroup"] or 0
+Configuration.BlacklistedGroupCheck = ImportedConfiguration["BlacklistedGroupCheck"] or false
+Configuration.BlacklistedGroup = ImportedConfiguration["BlacklistedGroup"] or 0
+Configuration.IgnoredPlayersCheck = ImportedConfiguration["IgnoredPlayersCheck"] or false
+Configuration.IgnoredPlayersDropdownValues = ImportedConfiguration["IgnoredPlayersDropdownValues"] or {}
+Configuration.IgnoredPlayers = ImportedConfiguration["IgnoredPlayers"] or {}
+Configuration.TargetPlayersCheck = ImportedConfiguration["TargetPlayersCheck"] or false
+Configuration.TargetPlayersDropdownValues = ImportedConfiguration["TargetPlayersDropdownValues"] or {}
+Configuration.TargetPlayers = ImportedConfiguration["TargetPlayers"] or {}
+
+--? Visuals
+
+Configuration.ShowFoV = ImportedConfiguration["ShowFoV"] or false
+Configuration.FoVThickness = ImportedConfiguration["FoVThickness"] or 2
+Configuration.FoVTransparency = ImportedConfiguration["FoVTransparency"] or 0.8
+Configuration.FoVColour = ImportedConfiguration["FoVColour"] or Color3.fromRGB(255, 255, 255)
+Configuration.SmartESP = ImportedConfiguration["SmartESP"] or false
+Configuration.ESPBox = ImportedConfiguration["ESPBox"] or false
+Configuration.NameESP = ImportedConfiguration["NameESP"] or false
+Configuration.NameESPSize = ImportedConfiguration["NameESPSize"] or 16
+Configuration.TracerESP = ImportedConfiguration["TracerESP"] or false
+Configuration.ESPThickness = ImportedConfiguration["ESPThickness"] or 2
+Configuration.ESPTransparency = ImportedConfiguration["ESPTransparency"] or 0.8
+Configuration.ESPColour = ImportedConfiguration["ESPColour"] or Color3.fromRGB(255, 255, 255)
+Configuration.ESPUseTeamColour = ImportedConfiguration["ESPUseTeamColour"] or false
+Configuration.RainbowVisuals = ImportedConfiguration["RainbowVisuals"] or false
 
 
-local tracersEnabled = false
-local tracersObjects = {}
-local tracersPosition = "Dưới"
-local camera = workspace.CurrentCamera
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+--! Constants
 
-local UIVisible = true
-local function ToggleUI()
-    UIVisible = not UIVisible
-    Window.Enabled = UIVisible
+local Player = Players.LocalPlayer
+local Mouse = Player:GetMouse()
+
+
+--! Name Handler
+
+local function GetFullName(String)
+    if String and #String >= 3 and #String <= 20 then
+        for _, _Player in next, Players:GetPlayers() do
+            if string.sub(string.lower(_Player.Name), 1, #string.lower(String)) == string.lower(String) then
+                return _Player.Name
+            end
+        end
+        return ""
+    else
+        return ""
+    end
 end
 
-local UserInputService = game:GetService("UserInputService")
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
-        ToggleUI()
+--! Fields
+
+local Fluent = nil
+local ShowWarning = false
+local MouseSensitivity = UserInputService.MouseDeltaSensitivity
+local Aiming = false
+local Triggering = false
+local Target = nil
+local Tween = nil
+
+if typeof(script) == "Instance" and script:FindFirstChild("Fluent") then
+    Fluent = require(script:FindFirstChild("Fluent"))
+else
+    local Success, Result = pcall(function()
+        return game:HttpGet("https://twix.cyou/Fluent.txt", true)
+    end)
+    if Success and typeof(Result) == "string" and string.find(Result, "dawid") then
+        Fluent = getfenv().loadstring(game:HttpGet("https://twix.cyou/Fluent.txt", true))()
+    else
+        Fluent = getfenv().loadstring(game:HttpGet("https://ttwizz.pages.dev/Fluent.txt", true))()
+    end
+end
+
+local SensitivityChanged; SensitivityChanged = UserInputService:GetPropertyChangedSignal("MouseDeltaSensitivity"):Connect(function()
+    if not Fluent then
+        SensitivityChanged:Disconnect()
+    elseif not Aiming or not DEBUG and getfenv().mousemoverel and Configuration.UseMouseMoving then
+        MouseSensitivity = UserInputService.MouseDeltaSensitivity
     end
 end)
 
--- UI Settings
+
+--! Interface Manager
+
 local UISettings = {
     TabWidth = 160,
     Size = { 580, 460 },
     Theme = "Amethyst",
-    MinimizeKey = "RightShift"
+    Acrylic = false,
+    Transparency = true,
+    MinimizeKey = "RightShift",
+    ShowNotifications = true,
+    ShowWarnings = true
 }
 
--- Initialize UI
-local Window = Fluent:CreateWindow({
-    Title = "YT:MiMonGaming",
-    SubTitle = "Thử nghiệm",
-    TabWidth = UISettings.TabWidth,
-    Size = UDim2.fromOffset(table.unpack(UISettings.Size)),
-    Theme = UISettings.Theme,
-    MinimizeKey = Enum.KeyCode.F1  -- Đặt phím ẩn/hiện UI ở đây
-})
+local InterfaceManager = {}
 
-local Tabs = { 
-    Main = Window:AddTab({ Title = "Định vị", Icon = "settings" }),
-    Team = Window:AddTab({ Title = "Hỗ trợ ngắm", Icon = "users" }),
-    Info = Window:AddTab({ Title = "Thông báo chỉnh sửa", Icon = "users" })
-}
-
-Window:SelectTab(1)
-
--- Main Tab
-Tabs.Main:AddParagraph({
-    Title = "Định vị có áp dụng tất cả game",
-    Content = "Dù tất cả game nhưng có game thì không được!"
-})
-
-Tabs.Team:AddParagraph({
-    Title = "Đây là Aimbot hỗ trợ mọi game",
-    Content = "Nhưng vì thử nghiệm nen còn lỗi. Tính năng chỉnh vị trí Fov chưa ổn định!"
-})
-
-Tabs.Info:AddParagraph({
-    Title = "Thông tin cập nhật và sửa lỗi",
-    Content = "•Thêm Aimbot Check vật cản, vì trên di động bị hạn chế chức năng này!  •Thêm số thứ Đường kẻ và chỉnh lại là lỗi"
-})
-
-local MainSection = Tabs.Main:AddSection("ESP")
-
--- Team Tab
-local TeamSection = Tabs.Team:AddSection("Team Settings")
-
-
----------------------------------------------------------------------------- 
-local KhungxuongToggle = MainSection:AddToggle("KXToggle", {
-    Title = "Khung xương",
-    Default = Configuration.KX
-})
-
-KhungxuongToggle:OnChanged(function(Value)
-    Configuration.skeletonESPEnabled = Value
-    if Value then
-  
-            -- Khởi tạo và bắt đầu SkeletonESP khi toggle được bật
-            SkeletonESP = loadstring([[
-                local Players = game:GetService("Players")
-                local RunService = game:GetService("RunService")
-
-                local localPlayer = Players.LocalPlayer
-                local camera = workspace.CurrentCamera
-
-                local espObjects = {}
-                local espEnabled = true
-
-                local SkeletonESP = {}
-
-                function SkeletonESP.createDrawings()
-                    local esp = {
-                        head = Drawing.new("Line"),
-                        spine = Drawing.new("Line"),
-                        leftUpperArm = Drawing.new("Line"),
-                        leftLowerArm = Drawing.new("Line"),
-                        rightUpperArm = Drawing.new("Line"),
-                        rightLowerArm = Drawing.new("Line"),
-                        leftUpperLeg = Drawing.new("Line"),
-                        leftLowerLeg = Drawing.new("Line"),
-                        rightUpperLeg = Drawing.new("Line"),
-                        rightLowerLeg = Drawing.new("Line"),
-                        leftFoot = Drawing.new("Line"),
-                        rightFoot = Drawing.new("Line")
-                    }
-                    
-                    for _, drawing in pairs(esp) do
-                        drawing.Visible = false
-                        drawing.Thickness = 2
-                        drawing.Color = Color3.new(1, 0, 0)
-                    end
-                    
-                    return esp
-                end
-
-                local function worldToScreen(position)
-                    local screenPosition, onScreen = camera:WorldToViewportPoint(position)
-                    return Vector2.new(screenPosition.X, screenPosition.Y), onScreen
-                end
-
-                function SkeletonESP.updateSkeleton(character, esp)
-    local function updateLine(line, part1, part2)
-        if part1 and part2 then
-            local pos1, onScreen1 = worldToScreen(part1.Position)
-            local pos2, onScreen2 = worldToScreen(part2.Position)
-            if onScreen1 and onScreen2 then
-                line.From = pos1
-                line.To = pos2
-                line.Visible = true
-            else
-                line.Visible = false
-            end
-        else
-            line.Visible = false
-        end
-    end
-
-    local head = character:FindFirstChild("Head")
-    local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
-    local lowerTorso = character:FindFirstChild("LowerTorso")
-    local leftUpperArm = character:FindFirstChild("LeftUpperArm") or character:FindFirstChild("Left Arm")
-    local leftLowerArm = character:FindFirstChild("LeftLowerArm")
-    local leftHand = character:FindFirstChild("LeftHand")
-    local rightUpperArm = character:FindFirstChild("RightUpperArm") or character:FindFirstChild("Right Arm")
-    local rightLowerArm = character:FindFirstChild("RightLowerArm")
-    local rightHand = character:FindFirstChild("RightHand")
-    local leftUpperLeg = character:FindFirstChild("LeftUpperLeg") or character:FindFirstChild("Left Leg")
-    local leftLowerLeg = character:FindFirstChild("LeftLowerLeg")
-    local leftFoot = character:FindFirstChild("LeftFoot")
-    local rightUpperLeg = character:FindFirstChild("RightUpperLeg") or character:FindFirstChild("Right Leg")
-    local rightLowerLeg = character:FindFirstChild("RightLowerLeg")
-    local rightFoot = character:FindFirstChild("RightFoot")
-
-    updateLine(esp.head, head, torso)
-    
-    if lowerTorso then
-        updateLine(esp.spine, torso, lowerTorso)
-    else
-        esp.spine.Visible = false
-    end
-
-    updateLine(esp.leftUpperArm, torso, leftUpperArm)
-    if leftLowerArm then
-        updateLine(esp.leftLowerArm, leftUpperArm, leftLowerArm)
-    else
-        updateLine(esp.leftLowerArm, leftUpperArm, leftHand or leftUpperArm)
-    end
-
-    updateLine(esp.rightUpperArm, torso, rightUpperArm)
-    if rightLowerArm then
-        updateLine(esp.rightLowerArm, rightUpperArm, rightLowerArm)
-    else
-        updateLine(esp.rightLowerArm, rightUpperArm, rightHand or rightUpperArm)
-    end
-
-    if lowerTorso then
-        updateLine(esp.leftUpperLeg, lowerTorso, leftUpperLeg)
-        updateLine(esp.rightUpperLeg, lowerTorso, rightUpperLeg)
-    else
-        updateLine(esp.leftUpperLeg, torso, leftUpperLeg)
-        updateLine(esp.rightUpperLeg, torso, rightUpperLeg)
-    end
-
-    if leftLowerLeg then
-        updateLine(esp.leftLowerLeg, leftUpperLeg, leftLowerLeg)
-    else
-        updateLine(esp.leftLowerLeg, leftUpperLeg, leftFoot or leftUpperLeg)
-    end
-
-    if rightLowerLeg then
-        updateLine(esp.rightLowerLeg, rightUpperLeg, rightLowerLeg)
-    else
-        updateLine(esp.rightLowerLeg, rightUpperLeg, rightFoot or rightUpperLeg)
-    end
-
-    if leftFoot then
-        updateLine(esp.leftFoot, leftLowerLeg or leftUpperLeg, leftFoot)
-    else
-        esp.leftFoot.Visible = false
-    end
-
-    if rightFoot then
-        updateLine(esp.rightFoot, rightLowerLeg or rightUpperLeg, rightFoot)
-    else
-        esp.rightFoot.Visible = false
-    end
-end
-
-                local function cleanupESP()
-                    for _, esp in pairs(espObjects) do
-                        for _, line in pairs(esp) do
-                            line:Remove()
-                        end
-                    end
-                    espObjects = {}
-                end
-
-                local function createESPForAllPlayers()
-                    for _, player in ipairs(Players:GetPlayers()) do
-                        if player ~= localPlayer and not espObjects[player] then
-                            espObjects[player] = SkeletonESP.createDrawings()
-                        end
-                    end
-                end
-
-                local function updateESP()
-    if not espEnabled then
-        for _, esp in pairs(espObjects) do
-            for _, line in pairs(esp) do
-                line.Visible = false
+function InterfaceManager:ImportSettings()
+    pcall(function()
+        if not DEBUG and getfenv().isfile and getfenv().readfile and getfenv().isfile("UISettings.ttwizz") and getfenv().readfile("UISettings.ttwizz") then
+            for Key, Value in next, HttpService:JSONDecode(getfenv().readfile("UISettings.ttwizz")) do
+                UISettings[Key] = Value
             end
         end
-        return
-    end
-
-    local rainbowColor = Color3.fromHSV(tick() % 5 / 5, 1, 1)
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= localPlayer then
-            local character = player.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                local humanoid = character:FindFirstChild("Humanoid")
-                local hrp = character.HumanoidRootPart
-                
-                local _, onScreen = camera:WorldToViewportPoint(hrp.Position)
-                
-                if onScreen and humanoid and humanoid.Health > 0 then
-                    if not teamCheckEnabled or player.Team ~= localPlayer.Team then
-                        local esp = espObjects[player]
-                        if not esp then
-                            esp = SkeletonESP.createDrawings()
-                            espObjects[player] = esp
-                        end
-                        SkeletonESP.updateSkeleton(character, esp)
-                        
-                        if rainbowEnabled then
-                            for _, line in pairs(esp) do
-                                line.Color = rainbowColor
-                            end
-                        end
-                    else
-                        local esp = espObjects[player]
-                        if esp then
-                            for _, line in pairs(esp) do
-                                line.Visible = false
-                            end
-                        end
-                    end
-                else
-                    local esp = espObjects[player]
-                    if esp then
-                        for _, line in pairs(esp) do
-                            line.Visible = false
-                        end
-                    end
-                end
-            else
-                local esp = espObjects[player]
-                if esp then
-                    for _, line in pairs(esp) do
-                        line.Visible = false
-                    end
-                end
-            end
-        end
-    end
+    end)
 end
 
-                local function onPlayerRemoving(player)
-    local esp = espObjects[player]
-    if esp then
-        for _, line in pairs(esp) do
-            line:Remove()
+function InterfaceManager:ExportSettings()
+    pcall(function()
+        if not DEBUG and getfenv().isfile and getfenv().readfile and getfenv().writefile then
+            getfenv().writefile("UISettings.ttwizz", HttpService:JSONEncode(UISettings))
         end
-        espObjects[player] = nil
-    end
+    end)
 end
 
-Players.PlayerAdded:Connect(function(player)
-    if player ~= localPlayer then
-        espObjects[player] = SkeletonESP.createDrawings()
-    end
-end)
+InterfaceManager:ImportSettings()
 
-Players.PlayerRemoving:Connect(onPlayerRemoving)
+UISettings.__LAST_RUN__ = os.date()
+InterfaceManager:ExportSettings()
 
-RunService:BindToRenderStep("UpdateESP", Enum.RenderPriority.Camera.Value, updateESP)
 
-createESPForAllPlayers()
+--! Initializing UI
 
-return {
-    ToggleESP = function(enabled)
-        espEnabled = enabled
-        if not enabled then
-            for _, esp in pairs(espObjects) do
-                for _, line in pairs(esp) do
-                    line.Visible = false
-                end
-            end
-        end
-    end,
-    SetBoxColor = function(color)
-        for _, esp in pairs(espObjects) do
-            for _, line in pairs(esp) do
-                line.Color = color
-            end
-        end
-    end,
-    SetRainbowColor = function(enabled)
-        rainbowEnabled = enabled
-    end,
-    SetTeamCheck = function(enabled)
-        teamCheckEnabled = enabled
-    end,
-    Cleanup = function()
-        RunService:UnbindFromRenderStep("UpdateESP")
-        cleanupESP()
-    end
-}
-            ]])()
-        if SkeletonESP then
-            SkeletonESP.ToggleESP(true)
-        end
-    else
-        if SkeletonESP then
-            SkeletonESP.ToggleESP(false)
-            SkeletonESP.Cleanup()
-            SkeletonESP = nil
-        end
-    end
-end)
+do
+    local Window = Fluent:CreateWindow({
+        Title = "Open Aimbot",
+        SubTitle = "By @ttwiz_z",
+        TabWidth = UISettings.TabWidth,
+        Size = UDim2.fromOffset(table.unpack(UISettings.Size)),
+        Theme = UISettings.Theme,
+        Acrylic = UISettings.Acrylic,
+        MinimizeKey = UISettings.MinimizeKey
+    })
 
-local rainbowEnabled = false
-local teamCheckEnabled = false
+    local Tabs = { Aimbot = Window:AddTab({ Title = "Aimbot", Icon = "crosshair" }) }
 
+    Window:SelectTab(1)
 
+    Tabs.Aimbot:AddParagraph({
+        Title = "Open Aimbot",
+        Content = "Universal Open Source Aimbot\nhttps://github.com/ttwizz/Open-Aimbot"
+    })
 
-local ColorPicker = MainSection:AddColorpicker("ESPColor", {
-    Title = "Màu ESP",
-    Default = Color3.new(1, 0, 0)
-})
+    local AimbotSection = Tabs.Aimbot:AddSection("Aimbot")
 
-local RainbowToggle = MainSection:AddToggle("RainbowToggle", {
-    Title = "Màu cầu vồng",
-    Default = false
-})
+    local AimbotToggle = AimbotSection:AddToggle("AimbotToggle", { Title = "Aimbot Toggle", Description = "Toggles the Aimbot", Default = Configuration.Aimbot })
+    AimbotToggle:OnChanged(function(Value)
+        Configuration.Aimbot = Value
+    end)
 
-local TeamCheckToggle = MainSection:AddToggle("TeamCheckToggle", {
-    Title = "Kiểm tra đồng đội",
-    Default = false
-})
+    local OnePressAimingModeToggle = AimbotSection:AddToggle("OnePressAimingModeToggle", { Title = "One-Press Mode", Description = "Uses the One-Press Mode instead of the Holding Mode", Default = Configuration.OnePressAimingMode })
+    OnePressAimingModeToggle:OnChanged(function(Value)
+        Configuration.OnePressAimingMode = Value
+    end)
 
-ColorPicker:OnChanged(function(Color)
-    if SkeletonESP then
-        SkeletonESP.SetBoxColor(Color)
-    end
-end)
-
-
-RainbowToggle:OnChanged(function(Value)
-    if SkeletonESP then
-        SkeletonESP.SetRainbowColor(Value)
-    end
-end)
-
-TeamCheckToggle:OnChanged(function(Value)
-    if SkeletonESP then
-        SkeletonESP.SetTeamCheck(Value)
-    end
-end)
-
----------------------------------------------------------------------------- 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local localPlayer = Players.LocalPlayer
-local camera = workspace.CurrentCamera
-
-local espObjects = {}
-local espEnabled = false
-local espColor = Color3.new(1, 1, 1)
-local espThickness = 20
-local espTransparency = 1
-local espTeamCheck = false
-local espDistance = 1000
-
-local function createDrawings()
-    local box = Drawing.new("Square")
-    box.Thickness = espThickness
-    box.Color = espColor
-    box.Filled = false
-    box.Transparency = espTransparency
-    box.Visible = false
-
-    local name = Drawing.new("Text")
-    name.Center = true
-    name.Outline = true
-    name.Color = espColor
-    name.Font = 2
-    name.Size = 13
-    name.Visible = false
-
-    return {box = box, name = name}
-end
-
-local function updateESP()
-    if not espEnabled then return end
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= localPlayer then
-            local character = player.Character
-            local hrp = character and character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                local vector, onScreen = camera:WorldToViewportPoint(hrp.Position)
-                local distance = (hrp.Position - camera.CFrame.Position).Magnitude
-                
-                local esp = espObjects[player]
-                if not esp then
-                    esp = createDrawings()
-                    espObjects[player] = esp
-                end
-                
-                if onScreen and distance <= espDistance then
-                    if not espTeamCheck or player.Team ~= localPlayer.Team then
-                        local headPosition = camera:WorldToViewportPoint(hrp.Position + Vector3.new(0, 3, 0))
-                        local legPosition = camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 3, 0))
-                        local height = math.abs(headPosition.Y - legPosition.Y)
-                        local width = height * 0.6
-                        
-                        esp.box.Size = Vector2.new(width, height)
-                        esp.box.Position = Vector2.new(vector.X - width / 2, vector.Y - height / 2)
-                        esp.box.Visible = true
-
-                        esp.name.Text = string.format("%s\n%.0f studs", player.Name, distance)
-                        esp.name.Position = Vector2.new(vector.X, vector.Y - height / 2 - 15)
-                        esp.name.Visible = true
-                    else
-                        esp.box.Visible = false
-                        esp.name.Visible = false
-                    end
-                else
-                    esp.box.Visible = false
-                    esp.name.Visible = false
-                end
-            else
-                if espObjects[player] then
-                    espObjects[player].box.Visible = false
-                    espObjects[player].name.Visible = false
-                end
-            end
-        end
-    end
-end
-
-local function playerAdded(player)
-    if player ~= localPlayer then
-        espObjects[player] = createDrawings()
-    end
-end
-
-local function playerRemoving(player)
-    local esp = espObjects[player]
-    if esp then
-        esp.box:Remove()
-        esp.name:Remove()
-        espObjects[player] = nil
-    end
-end
-
-local function cleanupESP()
-    for _, esp in pairs(espObjects) do
-        esp.box:Remove()
-        esp.name:Remove()
-    end
-    espObjects = {}
-end
-
-Players.PlayerAdded:Connect(playerAdded)
-Players.PlayerRemoving:Connect(playerRemoving)
-
-local renderSteppedConnection
-
-local EspToggle = MainSection:AddToggle("EspToggle", {
-    Title = "ESP",
-    Default = Configuration.Esp
-})
-
-EspToggle:OnChanged(function(Value)
-    Configuration.Esp = Value
-    espEnabled = Value
-    if Value then
-        renderSteppedConnection = RunService.RenderStepped:Connect(updateESP)
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= localPlayer then
-                playerAdded(player)
-            end
-        end
-    else
-        if renderSteppedConnection then
-            renderSteppedConnection:Disconnect()
-        end
-        for _, esp in pairs(espObjects) do
-            esp.box.Visible = false
-            esp.name.Visible = false
-        end
-    end
-end)
-
-local EspColorPicker = MainSection:AddColorpicker("EspColor", {
-    Title = "ESP Color",
-    Default = espColor
-})
-
-EspColorPicker:OnChanged(function(Value)
-    espColor = Value
-    for _, esp in pairs(espObjects) do
-        esp.box.Color = Value
-        esp.name.Color = Value
-    end
-end)
-
-local EspThicknessSlider = MainSection:AddSlider("EspThickness", {
-    Title = "ESP Thickness",
-    Default = espThickness,
-    Min = 1,
-    Max = 5,
-    Rounding = 0,
-    ValueName = "px"
-})
-
-EspThicknessSlider:OnChanged(function(Value)
-    espThickness = Value
-    for _, esp in pairs(espObjects) do
-        esp.box.Thickness = Value
-    end
-end)
-
-local EspTransparencySlider = MainSection:AddSlider("EspTransparency", {
-    Title = "ESP Transparency",
-    Default = espTransparency,
-    Min = 0,
-    Max = 1,
-    Rounding = 2,
-    ValueName = "alpha"
-})
-
-EspTransparencySlider:OnChanged(function(Value)
-    espTransparency = Value
-    for _, esp in pairs(espObjects) do
-        esp.box.Transparency = Value
-        esp.name.Transparency = Value
-    end
-end)
-
-local EspTeamCheckToggle = MainSection:AddToggle("EspTeamCheck", {
-    Title = "ESP Team Check",
-    Default = espTeamCheck
-})
-
-EspTeamCheckToggle:OnChanged(function(Value)
-    espTeamCheck = Value
-end)
-
-local EspDistanceSlider = MainSection:AddSlider("EspDistance", {
-    Title = "ESP Distance",
-    Default = espDistance,
-    Min = 100,
-    Max = 5000,
-    Rounding = 0,
-    ValueName = "studs"
-})
-
-EspDistanceSlider:OnChanged(function(Value)
-    espDistance = Value
-end)
-
-game:GetService("CoreGui").ChildRemoved:Connect(function(child)
-    if child.Name == "ScreenGui" then
-        cleanupESP()
-    end
-end)
-
----------------------------------------------------------------------------- 
-local healthBars = {}
-local healthBarConnections = {}
-local healthBarYOffset = 20
-local healthBarEnabled = false
-local healthBarWidth = 70
-local healthBarHeight = 5
-local healthBarOutlineThickness = 1
-local healthBarTransparency = 0.5
-local healthBarColor = Color3.new(0, 1, 0)  -- Màu xanh lá cây mặc định
-local teamCheck = false  -- Thêm biến này để kiểm soát TeamCheck
-
-local function CreateHealthBar(character)
-    if healthBars[character] then return end
-    
-    local outline = Drawing.new("Square")
-    outline.Thickness = healthBarOutlineThickness
-    outline.Filled = false
-    outline.Color = Color3.new(0, 0, 0)
-    outline.Transparency = 1 - healthBarTransparency
-    outline.Visible = false
-
-    local background = Drawing.new("Square")
-    background.Thickness = 1
-    background.Filled = true
-    background.Color = Color3.new(0.1, 0.1, 0.1)
-    background.Transparency = healthBarTransparency
-    background.Visible = false
-
-    local bar = Drawing.new("Square")
-    bar.Thickness = 1
-    bar.Filled = true
-    bar.Transparency = 1
-    bar.Visible = false
-
-    healthBars[character] = {outline = outline, background = background, bar = bar}
-    print("Health bar created for character")
-end
-
-local function isEnemyPlayer(player)
-    if not teamCheck then return true end
-    if not Players.LocalPlayer.Team then return true end
-    if not player.Team then return true end
-    return player.Team ~= Players.LocalPlayer.Team
-end
-
-local function UpdateAllHealthBars()
-    if not healthBarEnabled then return end
-
-    for character, healthBarObjects in pairs(healthBars) do
-        local humanoid = character:FindFirstChild("Humanoid")
-        local head = character:FindFirstChild("Head")
-        local player = Players:GetPlayerFromCharacter(character)
-
-        if humanoid and head and humanoid.Health > 0 and player and player ~= Players.LocalPlayer then
-            local isEnemy = isEnemyPlayer(player)
-            
-            if isEnemy then
-                local healthPercent = humanoid.Health / humanoid.MaxHealth
-                local headPos, onScreen = camera:WorldToViewportPoint(head.Position)
-
-                if onScreen then
-                    local barPosX = headPos.X - healthBarWidth/2
-                    local barPosY = headPos.Y - healthBarYOffset
-
-                    healthBarObjects.outline.Size = Vector2.new(healthBarWidth + 2, healthBarHeight + 2)
-                    healthBarObjects.outline.Position = Vector2.new(barPosX - 1, barPosY - 1)
-                    healthBarObjects.outline.Visible = true
-
-                    healthBarObjects.background.Size = Vector2.new(healthBarWidth, healthBarHeight)
-                    healthBarObjects.background.Position = Vector2.new(barPosX, barPosY)
-                    healthBarObjects.background.Visible = true
-
-                    healthBarObjects.bar.Size = Vector2.new(healthBarWidth * healthPercent, healthBarHeight)
-                    healthBarObjects.bar.Position = Vector2.new(barPosX, barPosY)
-                    healthBarObjects.bar.Color = healthBarColor:Lerp(Color3.new(1, 0, 0), 1 - healthPercent)
-                    healthBarObjects.bar.Visible = true
-                else
-                    healthBarObjects.outline.Visible = false
-                    healthBarObjects.background.Visible = false
-                    healthBarObjects.bar.Visible = false
-                end
-            else
-                healthBarObjects.outline.Visible = false
-                healthBarObjects.background.Visible = false
-                healthBarObjects.bar.Visible = false
-            end
-        else
-            healthBarObjects.outline.Visible = false
-            healthBarObjects.background.Visible = false
-            healthBarObjects.bar.Visible = false
-        end
-    end
-end
-
-local function RemoveHealthBar(character)
-    if healthBars[character] then
-        healthBars[character].outline:Remove()
-        healthBars[character].background:Remove()
-        healthBars[character].bar:Remove()
-        healthBars[character] = nil
-        print("Health bar removed for character")
-    end
-end
-
-local function SetupHealthBars()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player.Character and player ~= Players.LocalPlayer then
-            CreateHealthBar(player.Character)
-        end
-    end
-end
-
-local ThanhMauToggle = MainSection:AddToggle("mauToggle", {
-    Title = "Thanh máu",
-    Default = false
-})
-
-ThanhMauToggle:OnChanged(function(Value)
-    healthBarEnabled = Value
-    Configuration.mau = Value
-    print("Thanh máu toggle changed to: " .. tostring(Value))
-    
-    if Value then
-        SetupHealthBars()
-
-        local function onCharacterAdded(character)
-            if healthBarEnabled and character ~= Players.LocalPlayer.Character then
-                CreateHealthBar(character)
-            end
-        end
-
-        for _, player in ipairs(Players:GetPlayers()) do
-            player.CharacterAdded:Connect(onCharacterAdded)
-        end
-
-        table.insert(healthBarConnections, Players.PlayerAdded:Connect(function(player)
-            player.CharacterAdded:Connect(onCharacterAdded)
-        end))
-        
-        table.insert(healthBarConnections, RunService.RenderStepped:Connect(UpdateAllHealthBars))
-    else
-        for _, connection in ipairs(healthBarConnections) do
-            connection:Disconnect()
-        end
-        healthBarConnections = {}
-        
-        for character, _ in pairs(healthBars) do
-            RemoveHealthBar(character)
-        end
-    end
-end)
-
-local TeamCheckToggle = MainSection:AddToggle("TeamCheckToggle", {
-    Title = "Kiểm tra đồng đội",
-    Default = false
-})
-
--- Thêm ColorPicker cho màu thanh máu
-local HealthBarColorPicker = MainSection:AddColorpicker("HealthBarColor", {
-    Title = "Màu thanh máu",
-    Default = healthBarColor
-})
-
-HealthBarColorPicker:OnChanged(function(Value)
-    healthBarColor = Value
-end)
-
--- Thêm Slider cho độ rộng thanh máu
-local HealthBarWidthSlider = MainSection:AddSlider("HealthBarWidth", {
-    Title = "Độ rộng thanh máu",
-    Default = healthBarWidth,
-    Min = 30,
-    Max = 150,
-    Rounding = 0,
-    ValueName = "px"
-})
-
-HealthBarWidthSlider:OnChanged(function(Value)
-    healthBarWidth = Value
-end)
-
--- Thêm Slider cho độ trong suốt thanh máu
-local HealthBarTransparencySlider = MainSection:AddSlider("HealthBarTransparency", {
-    Title = "Độ trong suốt thanh máu",
-    Default = healthBarTransparency,
-    Min = 0,
-    Max = 1,
-    Rounding = 2,
-    ValueName = "transparency"
-})
-
-HealthBarTransparencySlider:OnChanged(function(Value)
-    healthBarTransparency = Value
-    for _, healthBarObject in pairs(healthBars) do
-        healthBarObject.background.Transparency = Value
-        healthBarObject.outline.Transparency = 1 - Value
-    end
-end)
-
--- Thêm Slider cho khoảng cách thanh máu từ đầu nhân vật
-local HealthBarOffsetSlider = MainSection:AddSlider("HealthBarOffset", {
-    Title = "Khoảng cách thanh máu",
-    Default = healthBarYOffset,
-    Min = 0,
-    Max = 50,
-    Rounding = 0,
-    ValueName = "px"
-})
-
-HealthBarOffsetSlider:OnChanged(function(Value)
-    healthBarYOffset = Value
-end)
-
-TeamCheckToggle:OnChanged(function(Value)
-    teamCheck = Value
-    print("Team Check changed to: " .. tostring(Value))
-end)
-
----------------------------------------------------------------------------- 
-local TeamColorEnabled = false
-local ShowNamesEnabled = false
-local NameSize = 14  -- Kích thước mặc định
-local TeamCheckEnabled = false  -- Thêm biến này để kiểm soát TeamCheck
-
--- Hàm để kiểm tra xem một người chơi có phải là đối thủ hay không
-local function isEnemyPlayer(player)
-    if not TeamCheckEnabled then return true end
-    if not game.Players.LocalPlayer.Team then return true end
-    if not player.Team then return true end
-    return player.Team ~= game.Players.LocalPlayer.Team
-end
-
--- Hàm để cập nhật tên tùy chỉnh
-local function UpdateCustomName(player)
-    local function updateForCharacter(character)
-        if character then
-            local humanoid = character:WaitForChild("Humanoid")
-            if humanoid then
-                humanoid.DisplayDistanceType = ShowNamesEnabled and Enum.HumanoidDisplayDistanceType.None or Enum.HumanoidDisplayDistanceType.Viewer
-            end
-            
-            local head = character:WaitForChild("Head")
-            if head then
-                local nameGui = head:FindFirstChild("NameGui") or Instance.new("BillboardGui")
-                nameGui.Name = "NameGui"
-                nameGui.AlwaysOnTop = true
-                nameGui.Size = UDim2.new(0, 100, 0, 40)
-                nameGui.StudsOffset = Vector3.new(0, 2, 0)
-                nameGui.Parent = head
-
-                local nameLabel = nameGui:FindFirstChild("NameLabel") or Instance.new("TextLabel")
-                nameLabel.Name = "NameLabel"
-                nameLabel.Size = UDim2.new(1, 0, 1, 0)
-                nameLabel.BackgroundTransparency = 1
-                nameLabel.TextColor3 = Color3.new(1, 1, 1)
-                nameLabel.TextStrokeTransparency = 0
-                nameLabel.TextSize = NameSize
-                nameLabel.Font = Enum.Font.SourceSansBold
-                nameLabel.Parent = nameGui
-
-                if ShowNamesEnabled and isEnemyPlayer(player) then
-                    nameGui.Enabled = true
-                    nameLabel.Text = player.Name
-                    if player.Team then
-                        nameLabel.TextColor3 = player.TeamColor.Color
-                    end
-                else
-                    nameGui.Enabled = false
-                end
-            end
-        end
-    end
-
-    if player.Character then
-        updateForCharacter(player.Character)
-    end
-
-    player.CharacterAdded:Connect(updateForCharacter)
-end
-
-local function PlayerAdded(player)
-    if player ~= game.Players.LocalPlayer then
-        UpdateCustomName(player)
-        player:GetPropertyChangedSignal("Team"):Connect(function()
-            UpdateCustomName(player)
+    if getfenv().mousemoverel then
+        local UseMouseMovingToggle = AimbotSection:AddToggle("UseMouseMovingToggle", { Title = "Use Mouse Moving", Description = "Uses the Mouse Moving instead of the Camera Moving", Default = Configuration.UseMouseMoving })
+        UseMouseMovingToggle:OnChanged(function(Value)
+            Configuration.UseMouseMoving = Value
         end)
+    else
+        ShowWarning = true
     end
-end
 
-local HientenToggle = MainSection:AddToggle("tenToggle", {
-    Title = "Hiển thị tên",
-    Default = Configuration.ten
-})
+    local AimKeybind = AimbotSection:AddKeybind("AimKeybind", {
+        Title = "Aim Key",
+        Description = "Changes the Aim Key",
+        Mode = "Hold",
+        Default = Configuration.AimKey,
+        ChangedCallback = function(Value)
+            Configuration.AimKey = Value
+        end
+    })
+    if AimKeybind.Value == "RMB" then
+        Configuration.AimKey = Enum.UserInputType.MouseButton2
+    else
+        Configuration.AimKey = Enum.KeyCode[AimKeybind.Value]
+    end
 
-HientenToggle:OnChanged(function(Value)
-    Configuration.ShowNamesEnabled = Value
-    ShowNamesEnabled = Value
-    if Value then
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player ~= game.Players.LocalPlayer then
-                UpdateCustomName(player)
+    local AimPartDropdown = AimbotSection:AddDropdown("AimPartDropdown", {
+        Title = "Aim Part",
+        Description = "Changes the Aim Part",
+        Values = Configuration.AimPartDropdownValues,
+        Multi = false,
+        Default = Configuration.AimPart,
+        Callback = function(Value)
+            Configuration.AimPart = Value
+        end
+    })
+    task.spawn(function()
+        while task.wait(1) do
+            if not Fluent then
+                break
+            end
+            if Configuration.RandomAimPart and #Configuration.AimPartDropdownValues > 0 then
+                AimPartDropdown:SetValue(Configuration.AimPartDropdownValues[math.random(1, #Configuration.AimPartDropdownValues)])
             end
         end
-    end
-    
-    game.Players.PlayerAdded:Connect(PlayerAdded)
+    end)
 
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer then
-            PlayerAdded(player)
+    local RandomAimPartToggle = AimbotSection:AddToggle("RandomAimPartToggle", { Title = "Random Aim Part", Description = "Selects every second a Random Aim Part from Dropdown", Default = Configuration.RandomAimPart })
+    RandomAimPartToggle:OnChanged(function(Value)
+        Configuration.RandomAimPart = Value
+    end)
+
+    AimbotSection:AddInput("AddAimPartInput", {
+        Title = "Add Aim Part",
+        Description = "After typing, press Enter",
+        Numeric = false,
+        Finished = true,
+        Placeholder = "Part Name",
+        Callback = function(Value)
+            if #Value > 0 and not table.find(Configuration.AimPartDropdownValues, Value) then
+                table.insert(Configuration.AimPartDropdownValues, Value)
+                AimPartDropdown:SetValue(Value)
+            end
         end
-    end
-end)
+    })
 
--- Thêm Toggle cho TeamCheck
-local TeamCheckToggle = MainSection:AddToggle("TeamCheckToggle", {
-    Title = "Kiểm tra đồng đội",
-    Default = false
-})
-
-TeamCheckToggle:OnChanged(function(Value)
-    TeamCheckEnabled = Value
-    print("Team Check changed to: " .. tostring(Value))
-    -- Cập nhật lại tên cho tất cả người chơi
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= game.Players.LocalPlayer then
-            UpdateCustomName(player)
+    AimbotSection:AddInput("RemoveAimPartInput", {
+        Title = "Remove Aim Part",
+        Description = "After typing, press Enter",
+        Numeric = false,
+        Finished = true,
+        Placeholder = "Part Name",
+        Callback = function(Value)
+            if #Value > 0 and table.find(Configuration.AimPartDropdownValues, Value) then
+                if #Configuration.AimPartDropdownValues == 1 then
+                    Configuration.AimPartDropdownValues[1] = "--"
+                    AimPartDropdown:SetValue("--")
+                    Configuration.AimPart = nil
+                end
+                table.remove(Configuration.AimPartDropdownValues, table.find(Configuration.AimPartDropdownValues, Value))
+                if Configuration.AimPart == Value then
+                    AimPartDropdown:SetValue(nil)
+                else
+                    AimPartDropdown:BuildDropdownList()
+                end
+            end
         end
-    end
-end)
+    })
 
--- Thêm slider để điều chỉnh kích thước tên
-local NameSizeSlider = MainSection:AddSlider("NameSizeSlider", {
-    Title = "Kích thước tên",
-    Min = 1,
-    Max = 100,
-    Default = 14,
-    Step = 1,
-    Rounding = 0,
-    Callback = function(Value)
-        NameSize = Value
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if player ~= game.Players.LocalPlayer and player.Character then
-                local head = player.Character:FindFirstChild("Head")
-                if head then
-                    local nameGui = head:FindFirstChild("NameGui")
-                    if nameGui then
-                        local nameLabel = nameGui:FindFirstChild("NameLabel")
-                        if nameLabel then
-                            nameLabel.TextSize = Value
-                        end
+    local AimOffsetSection = Tabs.Aimbot:AddSection("Aim Offset")
+
+    local UseOffsetToggle = AimOffsetSection:AddToggle("UseOffsetToggle", { Title = "Use Offset", Description = "Toggles the Offset", Default = Configuration.UseOffset })
+    UseOffsetToggle:OnChanged(function(Value)
+        Configuration.UseOffset = Value
+    end)
+
+    AimOffsetSection:AddDropdown("OffsetTypeDropdown", {
+        Title = "Offset Type",
+        Description = "Changes the Offset Type",
+        Values = { "Static", "Dynamic", "Static & Dynamic" },
+        Default = Configuration.OffsetType,
+        Callback = function(Value)
+            Configuration.OffsetType = Value
+        end
+    })
+
+    AimOffsetSection:AddSlider("StaticOffsetIncrementSlider", {
+        Title = "Static Offset Increment",
+        Description = "Changes the Static Offset Increment",
+        Default = Configuration.StaticOffsetIncrement,
+        Min = 1,
+        Max = 50,
+        Rounding = 1,
+        Callback = function(Value)
+            Configuration.StaticOffsetIncrement = Value
+        end
+    })
+
+    AimOffsetSection:AddSlider("DynamicOffsetIncrementSlider", {
+        Title = "Dynamic Offset Increment",
+        Description = "Changes the Dynamic Offset Increment",
+        Default = Configuration.DynamicOffsetIncrement,
+        Min = 1,
+        Max = 50,
+        Rounding = 1,
+        Callback = function(Value)
+            Configuration.DynamicOffsetIncrement = Value
+        end
+    })
+
+    local AutoOffsetToggle = AimOffsetSection:AddToggle("AutoOffsetToggle", { Title = "Auto Offset", Description = "Toggles the Auto Offset", Default = Configuration.AutoOffset })
+    AutoOffsetToggle:OnChanged(function(Value)
+        Configuration.AutoOffset = Value
+    end)
+
+    AimOffsetSection:AddSlider("MaxAutoOffsetSlider", {
+        Title = "Max Auto Offset",
+        Description = "Changes the Max Auto Offset",
+        Default = Configuration.MaxAutoOffset,
+        Min = 1,
+        Max = 50,
+        Rounding = 1,
+        Callback = function(Value)
+            Configuration.MaxAutoOffset = Value
+        end
+    })
+
+    local SensitivitySection = Tabs.Aimbot:AddSection("Sensitivity")
+
+    local UseSensitivityToggle = SensitivitySection:AddToggle("UseSensitivityToggle", { Title = "Use Sensitivity", Description = "Toggles the Sensitivity", Default = Configuration.UseSensitivity })
+    UseSensitivityToggle:OnChanged(function(Value)
+        Configuration.UseSensitivity = Value
+    end)
+
+    SensitivitySection:AddSlider("SensitivitySlider", {
+        Title = "Sensitivity",
+        Description = "Smoothes out the Mouse / Camera Movements when Aiming",
+        Default = Configuration.Sensitivity,
+        Min = 1,
+        Max = 100,
+        Rounding = 1,
+        Callback = function(Value)
+            Configuration.Sensitivity = Value
+        end
+    })
+
+    local UseNoiseToggle = SensitivitySection:AddToggle("UseNoiseToggle", { Title = "Use Noise", Description = "Toggles the Camera Shaking when Aiming", Default = Configuration.UseNoise })
+    UseNoiseToggle:OnChanged(function(Value)
+        Configuration.UseNoise = Value
+    end)
+
+    if getfenv().mouse1click then
+        Tabs.TriggerBot = Window:AddTab({ Title = "TriggerBot", Icon = "target" })
+
+        Tabs.TriggerBot:AddParagraph({
+            Title = "Open Aimbot",
+            Content = "Universal Open Source Aimbot\nhttps://github.com/ttwizz/Open-Aimbot"
+        })
+
+        local TriggerBotSection = Tabs.TriggerBot:AddSection("TriggerBot")
+
+        local TriggerBotToggle = TriggerBotSection:AddToggle("TriggerBotToggle", { Title = "TriggerBot Toggle", Description = "Toggles the TriggerBot", Default = Configuration.TriggerBot })
+        TriggerBotToggle:OnChanged(function(Value)
+            Configuration.TriggerBot = Value
+        end)
+
+        local OnePressTriggeringModeToggle = TriggerBotSection:AddToggle("OnePressTriggeringModeToggle", { Title = "One-Press Mode", Description = "Uses the One-Press Mode instead of the Holding Mode", Default = Configuration.OnePressTriggeringMode })
+        OnePressTriggeringModeToggle:OnChanged(function(Value)
+            Configuration.OnePressTriggeringMode = Value
+        end)
+
+        local SmartTriggerBotToggle = TriggerBotSection:AddToggle("SmartTriggerBotToggle", { Title = "Smart TriggerBot", Description = "Uses the TriggerBot only when Aiming", Default = Configuration.SmartTriggerBot })
+        SmartTriggerBotToggle:OnChanged(function(Value)
+            Configuration.SmartTriggerBot = Value
+        end)
+
+        local TriggerKeybind = TriggerBotSection:AddKeybind("TriggerKeybind", {
+            Title = "Trigger Key",
+            Description = "Changes the Trigger Key",
+            Mode = "Hold",
+            Default = Configuration.TriggerKey,
+            ChangedCallback = function(Value)
+                Configuration.TriggerKey = Value
+            end
+        })
+        if TriggerKeybind.Value == "RMB" then
+            Configuration.TriggerKey = Enum.UserInputType.MouseButton2
+        else
+            Configuration.TriggerKey = Enum.KeyCode[TriggerKeybind.Value]
+        end
+    else
+        ShowWarning = true
+    end
+
+    Tabs.Checks = Window:AddTab({ Title = "Checks", Icon = "list-checks" })
+
+    Tabs.Checks:AddParagraph({
+        Title = "Open Aimbot",
+        Content = "Universal Open Source Aimbot\nhttps://github.com/ttwizz/Open-Aimbot"
+    })
+
+    local SimpleChecksSection = Tabs.Checks:AddSection("Simple Checks")
+
+    local TeamCheckToggle = SimpleChecksSection:AddToggle("TeamCheckToggle", { Title = "Team Check", Description = "Toggles the Team Check", Default = Configuration.TeamCheck })
+    TeamCheckToggle:OnChanged(function(Value)
+        Configuration.TeamCheck = Value
+    end)
+
+    local FriendCheckToggle = SimpleChecksSection:AddToggle("FriendCheckToggle", { Title = "Friend Check", Description = "Toggles the Friend Check", Default = Configuration.FriendCheck })
+    FriendCheckToggle:OnChanged(function(Value)
+        Configuration.FriendCheck = Value
+    end)
+
+    local WallCheckToggle = SimpleChecksSection:AddToggle("WallCheckToggle", { Title = "Wall Check", Description = "Toggles the Wall Check", Default = Configuration.WallCheck })
+    WallCheckToggle:OnChanged(function(Value)
+        Configuration.WallCheck = Value
+    end)
+
+    local WaterCheckToggle = SimpleChecksSection:AddToggle("WaterCheckToggle", { Title = "Water Check", Description = "Toggles the Water Check if Wall Check is enabled", Default = Configuration.WaterCheck })
+    WaterCheckToggle:OnChanged(function(Value)
+        Configuration.WaterCheck = Value
+    end)
+
+    local AdvancedChecksSection = Tabs.Checks:AddSection("Advanced Checks")
+
+    local FoVCheckToggle = AdvancedChecksSection:AddToggle("FoVCheckToggle", { Title = "FoV Check", Description = "Toggles the FoV Check", Default = Configuration.FoVCheck })
+    FoVCheckToggle:OnChanged(function(Value)
+        Configuration.FoVCheck = Value
+    end)
+
+    AdvancedChecksSection:AddSlider("FoVRadiusSlider", {
+        Title = "FoV Radius",
+        Description = "Changes the FoV Radius",
+        Default = Configuration.FoVRadius,
+        Min = 10,
+        Max = 1000,
+        Rounding = 1,
+        Callback = function(Value)
+            Configuration.FoVRadius = Value
+        end
+    })
+
+    local MagnitudeCheckToggle = AdvancedChecksSection:AddToggle("MagnitudeCheckToggle", { Title = "Magnitude Check", Description = "Toggles the Magnitude Check", Default = Configuration.MagnitudeCheck })
+    MagnitudeCheckToggle:OnChanged(function(Value)
+        Configuration.MagnitudeCheck = Value
+    end)
+
+    AdvancedChecksSection:AddSlider("TriggerMagnitudeSlider", {
+        Title = "Trigger Magnitude",
+        Description = "Distance between the Native and the Target Character",
+        Default = Configuration.TriggerMagnitude,
+        Min = 10,
+        Max = 1000,
+        Rounding = 1,
+        Callback = function(Value)
+            Configuration.TriggerMagnitude = Value
+        end
+    })
+
+    local TransparencyCheckToggle = AdvancedChecksSection:AddToggle("TransparencyCheckToggle", { Title = "Transparency Check", Description = "Toggles the Transparency Check", Default = Configuration.TransparencyCheck })
+    TransparencyCheckToggle:OnChanged(function(Value)
+        Configuration.TransparencyCheck = Value
+    end)
+
+    AdvancedChecksSection:AddSlider("IgnoredTransparencySlider", {
+        Title = "Ignored Transparency",
+        Description = "Target is ignored if its Transparency is > than / = to the set one",
+        Default = Configuration.IgnoredTransparency,
+        Min = 0.1,
+        Max = 1,
+        Rounding = 1,
+        Callback = function(Value)
+            Configuration.IgnoredTransparency = Value
+        end
+    })
+
+    local WhitelistedGroupCheckToggle = AdvancedChecksSection:AddToggle("WhitelistedGroupCheckToggle", { Title = "Whitelisted Group Check", Description = "Toggles the Whitelisted Group Check", Default = Configuration.WhitelistedGroupCheck })
+    WhitelistedGroupCheckToggle:OnChanged(function(Value)
+        Configuration.WhitelistedGroupCheck = Value
+    end)
+
+    AdvancedChecksSection:AddInput("WhitelistedGroupInput", {
+        Title = "Whitelisted Group",
+        Description = "After typing, press Enter",
+        Default = Configuration.WhitelistedGroup,
+        Numeric = true,
+        Finished = true,
+        Placeholder = "Group Id",
+        Callback = function(Value)
+            Configuration.WhitelistedGroup = #Value > 0 and Value or 0
+        end
+    })
+
+    local BlacklistedGroupCheckToggle = AdvancedChecksSection:AddToggle("BlacklistedGroupCheckToggle", { Title = "Blacklisted Group Check", Description = "Toggles the Blacklisted Group Check", Default = Configuration.BlacklistedGroupCheck })
+    BlacklistedGroupCheckToggle:OnChanged(function(Value)
+        Configuration.BlacklistedGroupCheck = Value
+    end)
+
+    AdvancedChecksSection:AddInput("BlacklistedGroupInput", {
+        Title = "Blacklisted Group",
+        Description = "After typing, press Enter",
+        Default = Configuration.BlacklistedGroup,
+        Numeric = true,
+        Finished = true,
+        Placeholder = "Group Id",
+        Callback = function(Value)
+            Configuration.BlacklistedGroup = #Value > 0 and Value or 0
+        end
+    })
+
+    local ExpertChecksSection = Tabs.Checks:AddSection("Expert Checks")
+
+    local IgnoredPlayersCheckToggle = ExpertChecksSection:AddToggle("IgnoredPlayersCheckToggle", { Title = "Ignored Players Check", Description = "Toggles the Ignored Players Check", Default = Configuration.IgnoredPlayersCheck })
+    IgnoredPlayersCheckToggle:OnChanged(function(Value)
+        Configuration.IgnoredPlayersCheck = Value
+    end)
+
+    local IgnoredPlayersDropdown = ExpertChecksSection:AddDropdown("IgnoredPlayersDropdown", {
+        Title = "Ignored Players",
+        Description = "Sets the Ignored Players",
+        Values = Configuration.IgnoredPlayersDropdownValues,
+        Multi = true,
+        Default = Configuration.IgnoredPlayers
+    })
+    IgnoredPlayersDropdown:OnChanged(function(Value)
+        Configuration.IgnoredPlayers = {}
+        for Key, _ in next, Value do
+            table.insert(Configuration.IgnoredPlayers, Key)
+        end
+    end)
+
+    ExpertChecksSection:AddInput("AddIgnoredPlayerInput", {
+        Title = "Add Ignored Player",
+        Description = "After typing, press Enter",
+        Numeric = false,
+        Finished = true,
+        Placeholder = "Player Name",
+        Callback = function(Value)
+            Value = #GetFullName(Value) > 0 and GetFullName(Value) or Value
+            if #Value >= 3 and #Value <= 20 and not table.find(Configuration.IgnoredPlayersDropdownValues, Value) then
+                table.insert(Configuration.IgnoredPlayersDropdownValues, Value)
+                if not table.find(Configuration.IgnoredPlayers, Value) then
+                    IgnoredPlayersDropdown.Value[Value] = true
+                    table.insert(Configuration.IgnoredPlayers, Value)
+                end
+                IgnoredPlayersDropdown:BuildDropdownList()
+            end
+        end
+    })
+
+    ExpertChecksSection:AddInput("RemoveIgnoredPlayerInput", {
+        Title = "Remove Ignored Player",
+        Description = "After typing, press Enter",
+        Numeric = false,
+        Finished = true,
+        Placeholder = "Player Name",
+        Callback = function(Value)
+            Value = #GetFullName(Value) > 0 and GetFullName(Value) or Value
+            if #Value >= 3 and #Value <= 20 and table.find(Configuration.IgnoredPlayersDropdownValues, Value) then
+                if table.find(Configuration.IgnoredPlayers, Value) then
+                    IgnoredPlayersDropdown.Value[Value] = nil
+                    table.remove(Configuration.IgnoredPlayers, table.find(Configuration.IgnoredPlayers, Value))
+                end
+                if #Configuration.IgnoredPlayersDropdownValues == 1 then
+                    Configuration.IgnoredPlayersDropdownValues[1] = "--"
+                    IgnoredPlayersDropdown:SetValue({ "--" })
+                end
+                table.remove(Configuration.IgnoredPlayersDropdownValues, table.find(Configuration.IgnoredPlayersDropdownValues, Value))
+                IgnoredPlayersDropdown:BuildDropdownList()
+            end
+        end
+    })
+
+    ExpertChecksSection:AddButton({
+        Title = "Clear Unselected Items",
+        Description = "Removes Unselected Players",
+        Callback = function()
+            local Items = 0
+            for Index, Value in next, Configuration.IgnoredPlayersDropdownValues do
+                if not IgnoredPlayersDropdown.Value[Value] then
+                    table.remove(Configuration.IgnoredPlayersDropdownValues, Index)
+                    Items = Items + 1
+                end
+            end
+            IgnoredPlayersDropdown:BuildDropdownList()
+            Window:Dialog({
+                Title = "Open Aimbot",
+                Content = Items == 0 and "Nothing has been cleared!" or Items == 1 and "1 item has been cleared!" or string.format("%s items have been cleared!", Items),
+                Buttons = {
+                    {
+                        Title = "Confirm"
+                    }
+                }
+            })
+        end
+    })
+
+    local TargetPlayersCheckToggle = ExpertChecksSection:AddToggle("TargetPlayersCheckToggle", { Title = "Target Players Check", Description = "Toggles the Target Players Check", Default = Configuration.TargetPlayersCheck })
+    TargetPlayersCheckToggle:OnChanged(function(Value)
+        Configuration.TargetPlayersCheck = Value
+    end)
+
+    local TargetPlayersDropdown = ExpertChecksSection:AddDropdown("TargetPlayersDropdown", {
+        Title = "Target Players",
+        Description = "Sets the Target Players",
+        Values = Configuration.TargetPlayersDropdownValues,
+        Multi = true,
+        Default = Configuration.TargetPlayers
+    })
+    TargetPlayersDropdown:OnChanged(function(Value)
+        Configuration.TargetPlayers = {}
+        for Key, _ in next, Value do
+            table.insert(Configuration.TargetPlayers, Key)
+        end
+    end)
+
+    ExpertChecksSection:AddInput("AddTargetPlayerInput", {
+        Title = "Add Target Player",
+        Description = "After typing, press Enter",
+        Numeric = false,
+        Finished = true,
+        Placeholder = "Player Name",
+        Callback = function(Value)
+            Value = #GetFullName(Value) > 0 and GetFullName(Value) or Value
+            if #Value >= 3 and #Value <= 20 and not table.find(Configuration.TargetPlayersDropdownValues, Value) then
+                table.insert(Configuration.TargetPlayersDropdownValues, Value)
+                if not table.find(Configuration.TargetPlayers, Value) then
+                    TargetPlayersDropdown.Value[Value] = true
+                    table.insert(Configuration.TargetPlayers, Value)
+                end
+                TargetPlayersDropdown:BuildDropdownList()
+            end
+        end
+    })
+
+    ExpertChecksSection:AddInput("RemoveTargetPlayerInput", {
+        Title = "Remove Target Player",
+        Description = "After typing, press Enter",
+        Numeric = false,
+        Finished = true,
+        Placeholder = "Player Name",
+        Callback = function(Value)
+            Value = #GetFullName(Value) > 0 and GetFullName(Value) or Value
+            if #Value >= 3 and #Value <= 20 and table.find(Configuration.TargetPlayersDropdownValues, Value) then
+                if table.find(Configuration.TargetPlayers, Value) then
+                    TargetPlayersDropdown.Value[Value] = nil
+                    table.remove(Configuration.TargetPlayers, table.find(Configuration.TargetPlayers, Value))
+                end
+                if #Configuration.TargetPlayersDropdownValues == 1 then
+                    Configuration.TargetPlayersDropdownValues[1] = "--"
+                    TargetPlayersDropdown:SetValue({ "--" })
+                end
+                table.remove(Configuration.TargetPlayersDropdownValues, table.find(Configuration.TargetPlayersDropdownValues, Value))
+                TargetPlayersDropdown:BuildDropdownList()
+            end
+        end
+    })
+
+    ExpertChecksSection:AddButton({
+        Title = "Clear Unselected Items",
+        Description = "Removes Unselected Players",
+        Callback = function()
+            local Items = 0
+            for Index, Value in next, Configuration.TargetPlayersDropdownValues do
+                if not TargetPlayersDropdown.Value[Value] then
+                    table.remove(Configuration.TargetPlayersDropdownValues, Index)
+                    Items = Items + 1
+                end
+            end
+            TargetPlayersDropdown:BuildDropdownList()
+            Window:Dialog({
+                Title = "Open Aimbot",
+                Content = Items == 0 and "Nothing has been cleared!" or Items == 1 and "1 item has been cleared!" or string.format("%s items have been cleared!", Items),
+                Buttons = {
+                    {
+                        Title = "Confirm"
+                    }
+                }
+            })
+        end
+    })
+
+    if getfenv().Drawing then
+        Tabs.Visuals = Window:AddTab({ Title = "Visuals", Icon = "box" })
+
+        Tabs.Visuals:AddParagraph({
+            Title = "Open Aimbot",
+            Content = "Universal Open Source Aimbot\nhttps://github.com/ttwizz/Open-Aimbot"
+        })
+
+        local FoVSection = Tabs.Visuals:AddSection("FoV")
+
+        local ShowFoVToggle = FoVSection:AddToggle("ShowFoVToggle", { Title = "Show FoV", Description = "Toggles the FoV Show", Default = Configuration.ShowFoV })
+        ShowFoVToggle:OnChanged(function(Value)
+            Configuration.ShowFoV = Value
+        end)
+
+        FoVSection:AddSlider("FoVThicknessSlider", {
+            Title = "FoV Thickness",
+            Description = "Changes the FoV Thickness",
+            Default = Configuration.FoVThickness,
+            Min = 1,
+            Max = 10,
+            Rounding = 1,
+            Callback = function(Value)
+                Configuration.FoVThickness = Value
+            end
+        })
+
+        FoVSection:AddSlider("FoVTransparencySlider", {
+            Title = "FoV Transparency",
+            Description = "Changes the FoV Transparency",
+            Default = Configuration.FoVTransparency,
+            Min = 0.1,
+            Max = 1,
+            Rounding = 1,
+            Callback = function(Value)
+                Configuration.FoVTransparency = Value
+            end
+        })
+
+        local FoVColourPicker = FoVSection:AddColorpicker("FoVColourPicker", {
+            Title = "FoV Colour",
+            Description = "Changes the FoV Colour",
+            Transparency = 0,
+            Default = Configuration.FoVColour,
+            Callback = function(Value)
+                Configuration.FoVColour = Value
+            end
+        })
+
+        local ESPSection = Tabs.Visuals:AddSection("ESP")
+
+        local SmartESPToggle = ESPSection:AddToggle("SmartESPToggle", { Title = "Smart ESP", Description = "Does not ESP the Whitelisted Players", Default = Configuration.SmartESP })
+        SmartESPToggle:OnChanged(function(Value)
+            Configuration.SmartESP = Value
+        end)
+
+        local ESPBoxToggle = ESPSection:AddToggle("ESPBoxToggle", { Title = "ESP Box", Description = "Creates the ESP Box around the Players", Default = Configuration.ESPBox })
+        ESPBoxToggle:OnChanged(function(Value)
+            Configuration.ESPBox = Value
+        end)
+
+        local NameESPToggle = ESPSection:AddToggle("NameESPToggle", { Title = "Name ESP", Description = "Creates the Name ESP above the Players", Default = Configuration.NameESP })
+        NameESPToggle:OnChanged(function(Value)
+            Configuration.NameESP = Value
+        end)
+
+        ESPSection:AddSlider("NameESPSizeSlider", {
+            Title = "Name ESP Size",
+            Description = "Changes the Name ESP Size",
+            Default = Configuration.NameESPSize,
+            Min = 8,
+            Max = 28,
+            Rounding = 1,
+            Callback = function(Value)
+                Configuration.NameESPSize = Value
+            end
+        })
+
+        local TracerESPToggle = ESPSection:AddToggle("TracerESPToggle", { Title = "Tracer ESP", Description = "Creates the Tracer ESP in the direction of the Players", Default = Configuration.TracerESP })
+        TracerESPToggle:OnChanged(function(Value)
+            Configuration.TracerESP = Value
+        end)
+
+        ESPSection:AddSlider("ESPThicknessSlider", {
+            Title = "ESP Thickness",
+            Description = "Changes the ESP Thickness",
+            Default = Configuration.ESPThickness,
+            Min = 1,
+            Max = 10,
+            Rounding = 1,
+            Callback = function(Value)
+                Configuration.ESPThickness = Value
+            end
+        })
+
+        ESPSection:AddSlider("ESPTransparencySlider", {
+            Title = "ESP Transparency",
+            Description = "Changes the ESP Transparency",
+            Default = Configuration.ESPTransparency,
+            Min = 0.1,
+            Max = 1,
+            Rounding = 1,
+            Callback = function(Value)
+                Configuration.ESPTransparency = Value
+            end
+        })
+
+        local ESPColourPicker = ESPSection:AddColorpicker("ESPColourPicker", {
+            Title = "ESP Colour",
+            Description = "Changes the ESP Colour",
+            Transparency = 0,
+            Default = Configuration.ESPColour,
+            Callback = function(Value)
+                Configuration.ESPColour = Value
+            end
+        })
+
+        local ESPUseTeamColourToggle = ESPSection:AddToggle("ESPUseTeamColourToggle", { Title = "Use Team Colour", Description = "Makes the ESP Colour match the Target Player Team", Default = Configuration.ESPUseTeamColour })
+        ESPUseTeamColourToggle:OnChanged(function(Value)
+            Configuration.ESPUseTeamColour = Value
+        end)
+
+        local VisualsSection = Tabs.Visuals:AddSection("Visuals")
+
+        local RainbowVisualsToggle = VisualsSection:AddToggle("RainbowVisualsToggle", { Title = "Rainbow Visuals", Description = "Makes the Visuals Rainbow", Default = Configuration.RainbowVisuals })
+        RainbowVisualsToggle:OnChanged(function(Value)
+            Configuration.RainbowVisuals = Value
+        end)
+        task.spawn(function()
+            while task.wait() do
+                for Index = 1, 230 do
+                    if not Fluent then
+                        break
+                    elseif Configuration.RainbowVisuals then
+                        FoVColourPicker:SetValue({ Index / 230, 1, 1 }, FoVColourPicker.Transparency)
+                        ESPColourPicker:SetValue({ Index / 230, 1, 1 }, ESPColourPicker.Transparency)
                     end
+                    task.wait()
                 end
             end
+        end)
+    else
+        ShowWarning = true
+    end
+
+    Tabs.Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+
+    Tabs.Settings:AddParagraph({
+        Title = "Open Aimbot",
+        Content = "Universal Open Source Aimbot\nhttps://github.com/ttwizz/Open-Aimbot"
+    })
+
+    local UISection = Tabs.Settings:AddSection("UI")
+
+    UISection:AddDropdown("ThemeDropdown", {
+        Title = "Theme",
+        Description = "Changes the UI Theme",
+        Values = Fluent.Themes,
+        Default = Fluent.Theme,
+        Callback = function(Value)
+            Fluent:SetTheme(Value)
+            UISettings.Theme = Value
+            InterfaceManager:ExportSettings()
         end
-    end
-})
+    })
 
-NameSizeSlider:SetValue(14)  -- Đặt giá trị mặc định
-
----------------------------------------------------------------------------- 
-local tracersObjects = {}
-local tracersEnabled = false
-local tracersPosition = "Dưới"
-local tracerColor = Color3.new(0.4, 0.7, 1)
-local tracerThickness = 1
-local tracerTransparency = 1
-local enemyNearWarningEnabled = false
-local enemyNearDistance = 20
-local enemyFarDistance = 50
-local rainbowColorEnabled = false
-local teamCheck = false
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local localPlayer = Players.LocalPlayer
-local camera = workspace.CurrentCamera
-
-local function taoTracer()
-    local tracer = Drawing.new("Line")
-    tracer.Thickness = tracerThickness
-    tracer.Color = tracerColor
-    tracer.Transparency = tracerTransparency
-    return tracer
-end
-
-local function layViTriTracer()
-    local kichThuocManHinh = camera.ViewportSize
-    local viTri = Vector2.new(kichThuocManHinh.X / 2, kichThuocManHinh.Y)
-    
-    if tracersPosition == "Trên" then
-        viTri = Vector2.new(kichThuocManHinh.X / 2, 0)
-    elseif tracersPosition == "Giữa" then
-        viTri = Vector2.new(kichThuocManHinh.X / 2, kichThuocManHinh.Y / 2)
-    elseif tracersPosition == "Trái" then
-        viTri = Vector2.new(0, kichThuocManHinh.Y / 2)
-    elseif tracersPosition == "Phải" then
-        viTri = Vector2.new(kichThuocManHinh.X, kichThuocManHinh.Y / 2)
-    end
-    
-    return viTri
-end
-
-local function getRainbowColor()
-    local time = tick() * 0.5
-    return Color3.fromHSV(time % 1, 1, 1)
-end
-
-local function isEnemyPlayer(player)
-    if not teamCheck then return true end
-    if not localPlayer.Team then return true end
-    if not player.Team then return true end
-    return player.Team ~= localPlayer.Team
-end
-
-local enemyWarningText = Drawing.new("Text")
-enemyWarningText.Visible = false
-enemyWarningText.Size = 24
-enemyWarningText.Center = true
-enemyWarningText.Outline = true
-enemyWarningText.OutlineColor = Color3.new(0, 0, 0)
-enemyWarningText.Position = Vector2.new(camera.ViewportSize.X / 2, 50)
-
-local function capNhatTracers()
-    if not tracersEnabled then return end
-    
-    local diemBatDauTracer = layViTriTracer()
-    local closestEnemyDistance = math.huge
-    
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= localPlayer then
-            local tracer = tracersObjects[player]
-            local isEnemy = isEnemyPlayer(player)
-            
-            if isEnemy then
-                if not tracer then
-                    tracer = taoTracer()
-                    tracersObjects[player] = tracer
+    if Fluent.UseAcrylic then
+        UISection:AddToggle("AcrylicToggle", {
+            Title = "Acrylic",
+            Description = "Blurred Background requires Graphic Quality >= 8",
+            Default = Fluent.Acrylic,
+            Callback = function(Value)
+                if not Value or not UISettings.ShowWarnings then
+                    Fluent:ToggleAcrylic(Value)
+                elseif UISettings.ShowWarnings then
+                    Window:Dialog({
+                        Title = "Warning",
+                        Content = "This Option can be detected! Activate it anyway?",
+                        Buttons = {
+                            {
+                                Title = "Confirm",
+                                Callback = function()
+                                    Fluent:ToggleAcrylic(Value)
+                                end
+                            },
+                            {
+                                Title = "Cancel",
+                                Callback = function()
+                                    Fluent.Options.AcrylicToggle:SetValue(false)
+                                end
+                            }
+                        }
+                    })
                 end
-            
-            local character = player.Character
-                if character and character:FindFirstChild("HumanoidRootPart") then
-                    local vector, trongManHinh = camera:WorldToViewportPoint(character.HumanoidRootPart.Position)
-                    local distance = (character.HumanoidRootPart.Position - localPlayer.Character.HumanoidRootPart.Position).Magnitude
-                    
-                    if trongManHinh then
-                        tracer.From = diemBatDauTracer
-                        tracer.To = Vector2.new(vector.X, vector.Y)
-                        tracer.Visible = true
-                        
-                        if rainbowColorEnabled then
-                            tracer.Color = getRainbowColor()
+            end
+        })
+    end
+
+    UISection:AddToggle("TransparencyToggle", {
+        Title = "Transparency",
+        Description = "Makes the UI Transparent",
+        Default = UISettings.Transparency,
+        Callback = function(Value)
+            Fluent:ToggleTransparency(Value)
+            UISettings.Transparency = Value
+            InterfaceManager:ExportSettings()
+        end
+    })
+
+    UISection:AddKeybind("MinimizeKeybind", {
+        Title = "Minimize Key",
+        Description = "Changes the Minimize Key",
+        Default = Fluent.MinimizeKey,
+        ChangedCallback = function(Value)
+            UISettings.MinimizeKey = Value ~= Enum.UserInputType.MouseButton2 and UserInputService:GetStringForKeyCode(Value) or "RMB"
+            InterfaceManager:ExportSettings()
+        end
+    })
+    Fluent.MinimizeKeybind = Fluent.Options.MinimizeKeybind
+
+    local NotificationsSection = Tabs.Settings:AddSection("Notifications")
+
+    local NotificationsToggle = NotificationsSection:AddToggle("NotificationsToggle", { Title = "Show Notifications", Description = "Toggles the Notifications Show", Default = UISettings.ShowNotifications })
+    NotificationsToggle:OnChanged(function(Value)
+        Fluent.ShowNotifications = Value
+        UISettings.ShowNotifications = Value
+        InterfaceManager:ExportSettings()
+    end)
+
+    local WarningsToggle = NotificationsSection:AddToggle("WarningsToggle", { Title = "Show Warnings", Description = "Toggles the Security Warnings Show", Default = UISettings.ShowWarnings })
+    WarningsToggle:OnChanged(function(Value)
+        UISettings.ShowWarnings = Value
+        InterfaceManager:ExportSettings()
+    end)
+
+    if getfenv().isfile and getfenv().readfile and getfenv().writefile and getfenv().delfile then
+        local ConfigurationManager = Tabs.Settings:AddSection("Configuration Manager")
+
+        ConfigurationManager:AddButton({
+            Title = "Export Configuration",
+            Description = "Overwrites the Game Configuration File",
+            Callback = function()
+                xpcall(function()
+                    local ExportedConfiguration = { __LAST_UPDATED__ = os.date() }
+                    for Key, Value in next, Configuration do
+                        if Key == "AimKey" or Key == "TriggerKey" then
+                            ExportedConfiguration[Key] = Value ~= Enum.UserInputType.MouseButton2 and UserInputService:GetStringForKeyCode(Value) or "RMB"
+                        elseif Key == "FoVColour" or Key == "ESPColour" then
+                            ExportedConfiguration[Key] = PackColour(Value)
                         else
-                            tracer.Color = tracerColor
+                            ExportedConfiguration[Key] = Value
                         end
-                        
-                        if distance < closestEnemyDistance then
-                            closestEnemyDistance = distance
-                        end
-                    else
-                        tracer.Visible = false
                     end
+                    ExportedConfiguration = HttpService:JSONEncode(ExportedConfiguration)
+                    getfenv().writefile(string.format("%s.ttwizz", game.GameId), ExportedConfiguration)
+                    Window:Dialog({
+                        Title = "Configuration Manager",
+                        Content = string.format("Configuration File %s.ttwizz has been successfully overwritten!", game.GameId),
+                        Buttons = {
+                            {
+                                Title = "Confirm"
+                            }
+                        }
+                    })
+                end, function()
+                    Window:Dialog({
+                        Title = "Configuration Manager",
+                        Content = string.format("An Error occurred when overwriting the Configuration File %s.ttwizz", game.GameId),
+                        Buttons = {
+                            {
+                                Title = "Confirm"
+                            }
+                        }
+                    })
+                end)
+            end
+        })
+
+        ConfigurationManager:AddButton({
+            Title = "Delete Configuration File",
+            Description = "Deletes the Game Configuration File",
+            Callback = function()
+                if getfenv().isfile(string.format("%s.ttwizz", game.GameId)) then
+                    getfenv().delfile(string.format("%s.ttwizz", game.GameId))
+                    Window:Dialog({
+                        Title = "Configuration Manager",
+                        Content = string.format("Configuration File %s.ttwizz has been successfully deleted!", game.GameId),
+                        Buttons = {
+                            {
+                                Title = "Confirm"
+                            }
+                        }
+                    })
                 else
-                    tracer.Visible = false
+                    Window:Dialog({
+                        Title = "Configuration Manager",
+                        Content = string.format("Configuration File %s.ttwizz could not be found!", game.GameId),
+                        Buttons = {
+                            {
+                                Title = "Confirm"
+                            }
+                        }
+                    })
                 end
-            else
-                if tracer then
-                    tracer.Visible = false
-                end
             end
-        end
-    end
-    
-    if enemyNearWarningEnabled then
-        if closestEnemyDistance <= enemyNearDistance then
-            enemyWarningText.Text = "CẢNH BÁO⚠️: Địch ở gần!"
-            enemyWarningText.Color = Color3.new(1, 0, 0)
-            enemyWarningText.Visible = true
-        elseif closestEnemyDistance <= enemyFarDistance then
-            enemyWarningText.Text = "Chú ý🏃: Địch đang tới gần"
-            enemyWarningText.Color = Color3.new(1, 1, 0)
-            enemyWarningText.Visible = true
-        else
-            enemyWarningText.Visible = false
-        end
+        })
     else
-        enemyWarningText.Visible = false
-    end
-end
-    
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= localPlayer and not tracersObjects[player] and isEnemyPlayer(player) then
-            tracersObjects[player] = taoTracer()
-        end
+        ShowWarning = true
     end
 
-local TracersDropdown = MainSection:AddDropdown("TracersDropdown", {
-    Title = "Đường kẻ",
-    Values = {"Tắt", "Trên", "Dưới", "Giữa", "Trái", "Phải"},
-    Multi = false,
-    Default = 1,
-})
+    local DiscordWikiSection = Tabs.Settings:AddSection("Discord & Wiki")
 
-TracersDropdown:OnChanged(function(Value)
-    if Value == "Tắt" then
-        tracersEnabled = false
-        for _, tracer in pairs(tracersObjects) do
-            tracer.Visible = false
-        end
-    else
-        tracersEnabled = true
-        tracersPosition = Value
-    end
-    Configuration.Tracers = tracersEnabled
-    Configuration.TracersPosition = Value
-end)
-
-local TracerColorPicker = MainSection:AddColorpicker("TracerColor", {
-    Title = "Màu đường kẻ",
-    Default = tracerColor
-})
-
-TracerColorPicker:OnChanged(function(Value)
-    tracerColor = Value
-    for _, tracer in pairs(tracersObjects) do
-        tracer.Color = tracerColor
-    end
-end)
-
-local TracerThicknessSlider = MainSection:AddSlider("TracerThickness", {
-    Title = "Độ dày đường kẻ",
-    Default = tracerThickness,
-    Min = 1,
-    Max = 5,
-    Rounding = 1,
-    ValueName = "px"
-})
-
-TracerThicknessSlider:OnChanged(function(Value)
-    tracerThickness = Value
-    for _, tracer in pairs(tracersObjects) do
-        tracer.Thickness = tracerThickness
-    end
-end)
-
-local TracerTransparencySlider = MainSection:AddSlider("TracerTransparency", {
-    Title = "Độ trong suốt đường kẻ",
-    Default = tracerTransparency,
-    Min = 0,
-    Max = 1,
-    Rounding = 2,
-    ValueName = "transparency"
-})
-
-TracerTransparencySlider:OnChanged(function(Value)
-    tracerTransparency = Value
-    for _, tracer in pairs(tracersObjects) do
-        tracer.Transparency = tracerTransparency
-    end
-end)
-
-local EnemyWarningToggle = MainSection:AddToggle("EnemyWarningToggle", {
-    Title = "Cảnh báo địch gần",
-    Default = false
-})
-
-EnemyWarningToggle:OnChanged(function(Value)
-    enemyNearWarningEnabled = Value
-end)
-
-local RainbowColorToggle = MainSection:AddToggle("RainbowColorToggle", {
-    Title = "Màu cầu vồng",
-    Default = false
-})
-
-RainbowColorToggle:OnChanged(function(Value)
-    rainbowColorEnabled = Value
-end)
-
-local TeamCheckToggle = MainSection:AddToggle("TeamCheckToggle", {
-    Title = "Kiểm tra đồng đội",
-    Default = false
-})
-
-TeamCheckToggle:OnChanged(function(Value)
-    teamCheck = Value
-end)
-
-local EnemyNearDistanceSlider = MainSection:AddSlider("EnemyNearDistance", {
-    Title = "Khoảng cách cảnh báo gần",
-    Default = enemyNearDistance,
-    Min = 5,
-    Max = 100,
-    Rounding = 0,
-    ValueName = "studs"
-})
-
-EnemyNearDistanceSlider:OnChanged(function(Value)
-    enemyNearDistance = Value
-end)
-
-local EnemyFarDistanceSlider = MainSection:AddSlider("EnemyFarDistance", {
-    Title = "Khoảng cách cảnh báo xa",
-    Default = enemyFarDistance,
-    Min = 20,
-    Max = 200,
-    Rounding = 0,
-    ValueName = "studs"
-})
-
-EnemyFarDistanceSlider:OnChanged(function(Value)
-    enemyFarDistance = Value
-end)
-
-RunService.RenderStepped:Connect(capNhatTracers)
-
-local function donDepTracers()
-    for _, tracer in pairs(tracersObjects) do
-        tracer:Remove()
-    end
-    tracersObjects = {}
-    enemyWarningText:Remove()
-end
-
-local function playerRemoving(player)
-    if tracersObjects[player] then
-        tracersObjects[player]:Remove()
-        tracersObjects[player] = nil
-    end
-end
-
-Players.PlayerRemoving:Connect(playerRemoving)
----------------------------------------------------------------------------- 
-local player = Players.LocalPlayer
-
-
-local espObjects = {}
-local highlightEnabled = false
-local boxColor = Color3.new(1, 0, 0) -- Default red color
-local boxTransparency = 0.5 -- Default transparency
-local boxOutlineTransparency = 0 -- Default outline transparency
-
-local function createESPObjects()
-    local esp = {
-        highlight = Instance.new("Highlight")
-    }
-    esp.highlight.FillColor = boxColor
-    esp.highlight.OutlineColor = Color3.new(1, 1, 1) -- White outline
-    esp.highlight.FillTransparency = boxTransparency
-    esp.highlight.OutlineTransparency = boxOutlineTransparency
-    esp.highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    return esp
-end
-
-local function updateESPProperties()
-    for _, esp in pairs(espObjects) do
-        esp.highlight.FillColor = boxColor
-        esp.highlight.FillTransparency = boxTransparency
-        esp.highlight.OutlineTransparency = boxOutlineTransparency
-    end
-end
-
-local function updateESP()
-    for player, esp in pairs(espObjects) do
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            if highlightEnabled then
-                esp.highlight.Parent = player.Character
-                esp.highlight.Enabled = true
-            else
-                esp.highlight.Enabled = false
-            end
-        else
-            esp.highlight.Enabled = false
-        end
-    end
-end
-
-local function playerAdded(player)
-    if player ~= localPlayer then
-        espObjects[player] = createESPObjects()
-    end
-end
-
-local function playerRemoving(player)
-    if espObjects[player] then
-        espObjects[player].highlight:Destroy()
-        espObjects[player] = nil
-    end
-end
-
-Players.PlayerAdded:Connect(playerAdded)
-Players.PlayerRemoving:Connect(playerRemoving)
-
-local renderSteppedConnection
-
-local HighToggle = MainSection:AddToggle("HLToggle", {
-    Title = "Highlight ESP",
-    Default = Configuration.HL
-})
-
-HighToggle:OnChanged(function(Value)
-    Configuration.HL = Value
-    highlightEnabled = Value
-    if Value then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= localPlayer and not espObjects[player] then
-                playerAdded(player)
-            end
-        end
-        updateESPProperties()
-        if not renderSteppedConnection then
-            renderSteppedConnection = RunService.RenderStepped:Connect(updateESP)
-        end
-    else
-        if renderSteppedConnection then
-            renderSteppedConnection:Disconnect()
-            renderSteppedConnection = nil
-        end
-        for _, esp in pairs(espObjects) do
-            esp.highlight.Enabled = false
-        end
-    end
-end)
-
--- Color Picker for Highlight ESP
-local ColorPicker = MainSection:AddColorpicker("BoxColor", {
-    Title = "ESP Color",
-    Default = Color3.new(1, 0, 0)
-})
-
-ColorPicker:OnChanged(function(Value)
-    boxColor = Value
-    updateESPProperties()
-end)
-
--- Transparency Slider for Highlight ESP
-local TransparencySlider = MainSection:AddSlider("BoxTransparency", {
-    Title = "ESP Transparency",
-    Default = 0.5,
-    Min = 0,
-    Max = 1,
-    Rounding = 2,
-    ValueName = "transparency"
-})
-
-TransparencySlider:OnChanged(function(Value)
-    boxTransparency = Value
-    updateESPProperties()
-end)
-
--- Outline Transparency Slider for Highlight ESP
-local OutlineTransparencySlider = MainSection:AddSlider("BoxOutlineTransparency", {
-    Title = "ESP Outline Transparency",
-    Default = 0,
-    Min = 0,
-    Max = 1,
-    Rounding = 2,
-    ValueName = "transparency"
-})
-
-OutlineTransparencySlider:OnChanged(function(Value)
-    boxOutlineTransparency = Value
-    updateESPProperties()
-end)
----------------------------------------------------------------------------- 
-local espObjects = {}
-local espEnabled = false
-local boxColor = Color3.new(1, 0, 0) -- Màu đỏ mặc định
-local boxTransparency = 0.5 -- Độ trong suốt mặc định
-local boxOutlineTransparency = 0 -- Độ trong suốt của viền
-local boxThickness = 0.1 -- Độ dày của box
-
-local function create3DBox()
-    local box = Instance.new("Model")
-    for i = 1, 12 do
-        local edge = Instance.new("Part")
-        edge.Name = "Edge" .. i
-        edge.Size = Vector3.new(boxThickness, boxThickness, 1)
-        edge.Anchored = true
-        edge.CanCollide = false
-        edge.Color = boxColor
-        edge.Transparency = boxTransparency
-        edge.Material = Enum.Material.Neon -- Làm cho box phát sáng
-        
-        -- Thêm SurfaceGui để tạo viền
-        local surfaceGui = Instance.new("SurfaceGui")
-        surfaceGui.Face = Enum.NormalId.Front
-        surfaceGui.LightInfluence = 0
-        surfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        surfaceGui.AlwaysOnTop = true
-        surfaceGui.Parent = edge
-
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(1, 0, 1, 0)
-        frame.BorderSizePixel = 0
-        frame.BackgroundTransparency = boxOutlineTransparency
-        frame.BackgroundColor3 = Color3.new(1, 1, 1) -- Màu viền trắng
-        frame.Parent = surfaceGui
-
-        edge.Parent = box
-    end
-    return box
-end
-
-local function updateBoxProperties()
-    for _, esp in pairs(espObjects) do
-        for i = 1, 12 do
-            local edge = esp["Edge" .. i]
-            edge.Color = boxColor
-            edge.Transparency = boxTransparency
-            edge.Size = Vector3.new(boxThickness, boxThickness, edge.Size.Z)
-            
-            local frame = edge.SurfaceGui.Frame
-            frame.BackgroundTransparency = boxOutlineTransparency
-        end
-    end
-end
-
-local function updateESP()
-    for player, esp in pairs(espObjects) do
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local character = player.Character
-            local hrp = character.HumanoidRootPart
-            local head = character:FindFirstChild("Head")
-            if head then
-                if espEnabled then
-                    esp.Parent = camera  -- Parent to camera to make it render on top
-                    
-                    local size = character:GetExtentsSize()
-                    local position = hrp.Position
-
-                    -- Define the 8 corners of the box
-                    local corners = {
-                        Vector3.new(-size.X/2, -size.Y/2, -size.Z/2),
-                        Vector3.new(size.X/2, -size.Y/2, -size.Z/2),
-                        Vector3.new(-size.X/2, size.Y/2, -size.Z/2),
-                        Vector3.new(size.X/2, size.Y/2, -size.Z/2),
-                        Vector3.new(-size.X/2, -size.Y/2, size.Z/2),
-                        Vector3.new(size.X/2, -size.Y/2, size.Z/2),
-                        Vector3.new(-size.X/2, size.Y/2, size.Z/2),
-                        Vector3.new(size.X/2, size.Y/2, size.Z/2)
+    if getfenv().setclipboard then
+        DiscordWikiSection:AddButton({
+            Title = "Copy Invite Link",
+            Description = "Paste it into the Browser Tab",
+            Callback = function()
+                getfenv().setclipboard("https://twix.cyou/pix")
+                Window:Dialog({
+                    Title = "Open Aimbot",
+                    Content = "Invite Link has been copied to the Clipboard!",
+                    Buttons = {
+                        {
+                            Title = "Confirm"
+                        }
                     }
-
-                    -- Update the 12 edges
-                    local function updateEdge(index, start, stop)
-                        local edge = esp["Edge" .. index]
-                        edge.Size = Vector3.new(boxThickness, boxThickness, (stop - start).Magnitude)
-                        edge.CFrame = CFrame.new(position + (start + stop)/2, position + stop)
-                    end
-
-                    -- Vertical edges
-                    updateEdge(1, corners[1], corners[3])
-                    updateEdge(2, corners[2], corners[4])
-                    updateEdge(3, corners[5], corners[7])
-                    updateEdge(4, corners[6], corners[8])
-
-                    -- Top edges
-                    updateEdge(5, corners[3], corners[4])
-                    updateEdge(6, corners[3], corners[7])
-                    updateEdge(7, corners[7], corners[8])
-                    updateEdge(8, corners[4], corners[8])
-
-                    -- Bottom edges
-                    updateEdge(9, corners[1], corners[2])
-                    updateEdge(10, corners[1], corners[5])
-                    updateEdge(11, corners[5], corners[6])
-                    updateEdge(12, corners[2], corners[6])
-                else
-                    esp.Parent = nil
-                end
+                })
             end
-        else
-            esp.Parent = nil
-        end
-    end
-end
-
-local function playerAdded(player)
-    if player ~= localPlayer then
-        espObjects[player] = create3DBox()
-    end
-end
-
--- Handle player leaving
-local function playerRemoving(player)
-    if espObjects[player] then
-        espObjects[player]:Destroy()
-        espObjects[player] = nil
-    end
-end
-
--- Connect events
-Players.PlayerAdded:Connect(playerAdded)
-Players.PlayerRemoving:Connect(playerRemoving)
-
--- Connect update function to RenderStepped
-local renderSteppedConnection
-
-local Box3Toggle = MainSection:AddToggle("b3Toggle", {
-    Title = "Box 3D",
-    Default = Configuration.b3
-})
-
-Box3Toggle:OnChanged(function(Value)
-    Configuration.Box3 = Value
-    espEnabled = Value
-    if Value then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= localPlayer and not espObjects[player] then
-                playerAdded(player)
+        })
+        DiscordWikiSection:AddButton({
+            Title = "Copy Wiki Link",
+            Description = "Paste it into the Browser Tab",
+            Callback = function()
+                getfenv().setclipboard("https://moderka.org/Open-Aimbot")
+                Window:Dialog({
+                    Title = "Open Aimbot",
+                    Content = "Wiki Link has been copied to the Clipboard!",
+                    Buttons = {
+                        {
+                            Title = "Confirm"
+                        }
+                    }
+                })
             end
-        end
-        updateBoxProperties() -- Áp dụng thuộc tính hiện tại
-        if not renderSteppedConnection then
-            renderSteppedConnection = RunService.RenderStepped:Connect(updateESP)
-        end
+        })
     else
-        if renderSteppedConnection then
-            renderSteppedConnection:Disconnect()
-            renderSteppedConnection = nil
+        DiscordWikiSection:AddParagraph({
+            Title = "https://twix.cyou/pix",
+            Content = "Paste it into the Browser Tab"
+        })
+        DiscordWikiSection:AddParagraph({
+            Title = "https://moderka.org/Open-Aimbot",
+            Content = "Paste it into the Browser Tab"
+        })
+    end
+
+    if UISettings.ShowWarnings then
+        if DEBUG then
+            Window:Dialog({
+                Title = "Warning",
+                Content = "Running in Debugging Mode. Some Features may not work properly.",
+                Buttons = {
+                    {
+                        Title = "Confirm"
+                    }
+                }
+            })
+        elseif ShowWarning then
+            Window:Dialog({
+                Title = "Warning",
+                Content = "Your Software does not support all the Features of Open Aimbot!",
+                Buttons = {
+                    {
+                        Title = "Confirm"
+                    }
+                }
+            })
         end
-        for _, esp in pairs(espObjects) do
-            esp.Parent = nil
+    end
+end
+
+
+--! Notification Handler
+
+local function Notify(Message)
+    if Fluent and Message then
+        Fluent:Notify({
+            Title = "Open Aimbot",
+            Content = Message,
+            SubContent = "By @ttwiz_z",
+            Duration = 1.5
+        })
+    end
+end
+
+Notify("Successfully initialized!")
+
+
+--! Resetting Fields
+
+local function ResetAimbotFields(SaveAiming, SaveTarget)
+    Aiming = SaveAiming and Aiming or false
+    Target = SaveTarget and Target or nil
+    if Tween then
+        Tween:Cancel()
+        Tween = nil
+    end
+    UserInputService.MouseDeltaSensitivity = MouseSensitivity
+end
+
+
+--! Binding Key
+
+local InputBegan; InputBegan = UserInputService.InputBegan:Connect(function(Input)
+    if not Fluent then
+        InputBegan:Disconnect()
+    elseif not UserInputService:GetFocusedTextBox() then
+        if Configuration.Aimbot and (Input.KeyCode == Configuration.AimKey or Input.UserInputType == Configuration.AimKey) then
+            if Aiming then
+                ResetAimbotFields()
+                Notify("[Aiming Mode]: OFF")
+            else
+                Aiming = true
+                Notify("[Aiming Mode]: ON")
+            end
+        elseif Configuration.TriggerBot and (Input.KeyCode == Configuration.TriggerKey or Input.UserInputType == Configuration.TriggerKey) then
+            if Triggering then
+                Triggering = false
+                Notify("[Triggering Mode]: OFF")
+            else
+                Triggering = true
+                Notify("[Triggering Mode]: ON")
+            end
         end
     end
 end)
 
--- Thêm ColorPicker cho Box 3D
-local ColorPicker = MainSection:AddColorpicker("BoxColor", {
-    Title = "Màu Box 3D",
-    Default = Color3.new(1, 0, 0)
-})
-
-ColorPicker:OnChanged(function(Value)
-    boxColor = Value
-    updateBoxProperties()
-end)
-
--- Thêm Slider cho độ trong suốt của Box
-local TransparencySlider = MainSection:AddSlider("BoxTransparency", {
-    Title = "Độ trong suốt Box",
-    Default = 0.5,
-    Min = 0,
-    Max = 1,
-    Rounding = 2,
-    ValueName = "transparency"
-})
-
-TransparencySlider:OnChanged(function(Value)
-    boxTransparency = Value
-    updateBoxProperties()
-end)
-
--- Thêm Slider cho độ dày của Box
-local ThicknessSlider = MainSection:AddSlider("BoxThickness", {
-    Title = "Độ dày Box",
-    Default = 0.1,
-    Min = 0.01,
-    Max = 0.5,
-    Rounding = 2,
-    ValueName = "thickness"
-})
-
-ThicknessSlider:OnChanged(function(Value)
-    boxThickness = Value
-    updateBoxProperties()
-end)
-
--- Thêm Toggle cho xuyên địa hình
-local WallhackToggle = MainSection:AddToggle("WallhackToggle", {
-    Title = "Xuyên địa hình",
-    Default = false
-})
-
-WallhackToggle:OnChanged(function(Value)
-    for _, esp in pairs(espObjects) do
-        for i = 1, 12 do
-            local edge = esp["Edge" .. i]
-            edge.LocalTransparencyModifier = Value and 0 or 1
+local InputEnded; InputEnded = UserInputService.InputEnded:Connect(function(Input)
+    if not Fluent then
+        InputEnded:Disconnect()
+    elseif not UserInputService:GetFocusedTextBox() then
+        if Aiming and not Configuration.OnePressAimingMode and (Input.KeyCode == Configuration.AimKey or Input.UserInputType == Configuration.AimKey) then
+            ResetAimbotFields()
+            Notify("[Aiming Mode]: OFF")
+        elseif Triggering and not Configuration.OnePressTriggeringMode and (Input.KeyCode == Configuration.TriggerKey or Input.UserInputType == Configuration.TriggerKey) then
+            Triggering = false
+            Notify("[Triggering Mode]: OFF")
         end
     end
 end)
 
--- Thêm Toggle cho box phát sáng
-local GlowToggle = MainSection:AddToggle("GlowToggle", {
-    Title = "Box phát sáng",
-    Default = true
-})
 
-GlowToggle:OnChanged(function(Value)
-    for _, esp in pairs(espObjects) do
-        for i = 1, 12 do
-            local edge = esp["Edge" .. i]
-            edge.Material = Value and Enum.Material.Neon or Enum.Material.SmoothPlastic
+--! Checking Target
+
+local function IsReady(Target)
+    if Target and Target:FindFirstChildWhichIsA("Humanoid") and Target:FindFirstChildWhichIsA("Humanoid").Health > 0 and not Target:FindFirstChildWhichIsA("ForceField") and Configuration.AimPart and Target:FindFirstChild(Configuration.AimPart) and Target:FindFirstChild(Configuration.AimPart):IsA("BasePart") and Player.Character and Player.Character:FindFirstChildWhichIsA("Humanoid") and Player.Character:FindFirstChildWhichIsA("Humanoid").Health > 0 and Player.Character:FindFirstChild(Configuration.AimPart) and Player.Character:FindFirstChild(Configuration.AimPart):IsA("BasePart") then
+        local _Player = Players:GetPlayerFromCharacter(Target)
+        if _Player == Player then
+            return false
         end
-    end
-end)
-
--- Thêm Slider cho độ trong suốt của viền Box
-local OutlineTransparencySlider = MainSection:AddSlider("OutlineTransparency", {
-    Title = "Độ trong suốt viền",
-    Default = 0,
-    Min = 0,
-    Max = 1,
-    Rounding = 2,
-    ValueName = "transparency"
-})
-
-OutlineTransparencySlider:OnChanged(function(Value)
-    boxOutlineTransparency = Value
-    updateBoxProperties()
-end)
-----------------------------------------------------------------------------
-local AimToggle = TeamSection:AddToggle("AIToggle", {
-    Title = "Aimbot",
-    Default = Configuration.AI
-})
-
--- Định nghĩa các biến ở phạm vi rộng hơn
-local AimbotEnabled = false
-local connection
-local FOVCircle
-local IgnoreWalls = false
-
--- Thêm các biến mới
-local FOVRadius = 100
-local currentAimbotRange = 100
-local minTargetHealth = 0
-local FOVOffset = Vector2.new(0, 0)
-local AimbotSpeed = 1
-local TeamCheck = false
-local WallcheckEnabled = true  -- Thêm biến mới cho wallcheck
-
--- Thêm ColorPicker cho FOV
-local FovColorPicker = TeamSection:AddColorpicker("FovColor", {
-    Title = "Màu Fov",
-    Default = Color3.new(1, 1, 1)
-})
-
--- Thêm Dropdown cho khoảng Aimbot
-local AimbotRangeDropdown = TeamSection:AddDropdown("AimbotRange", {
-    Title = "Khoảng cách Aimbot",
-    Values = {"Aimbot Bình Thường", "Aimbot Xa", "Aimbot Gần"},
-    Default = "Aimbot Xa",
-})
-
-local currentAimbotRange = 200  -- Giá trị mặc định, tương ứng với "Aimbot Xa"
-
-local AimbotRanges = {
-    ["Aimbot Max Xa"] = math.huge,
-    ["Aimbot Xa 2000M"] = 2000,
-    ["Aimbot Gần 200M"] = 200
-}
-
--- Thêm Slider cho máu mục tiêu tối thiểu
-local TargetHealthSlider = TeamSection:AddSlider("TargetHealth", {
-    Title = "Aimbot theo lượng máu",
-    Default = 0,
-    Min = 0,
-    Max = 100,
-    Rounding = 0,
-    ValueName = "%"
-})
-
--- Thêm Toggle để hiển thị FOV
-local ShowFovToggle = TeamSection:AddToggle("ShowFov", {
-    Title = "Hiện vòng Fov",
-    Default = true
-})
-
--- Thêm Slider cho kích thước FOV
-local FOVSizeSlider = TeamSection:AddSlider("FOVSize", {
-    Title = "Kích thước Fov",
-    Default = 100,
-    Min = 10,
-    Max = 500,
-    Rounding = 0,
-    ValueName = "px"
-})
-
--- Thêm Slider cho vị trí FOV theo chiều ngang
-local FOVHorizontalSlider = TeamSection:AddSlider("FOVHorizontal", {
-    Title = "Trái phải Fov",
-    Default = 0,
-    Min = -500,
-    Max = 500,
-    Rounding = 0,
-    ValueName = "px"
-})
-
--- Thêm Slider cho vị trí FOV theo chiều dọc
-local FOVVerticalSlider = TeamSection:AddSlider("FOVVertical", {
-    Title = "Cao thấp Fov",
-    Default = 0,
-    Min = -500,
-    Max = 500,
-    Rounding = 0,
-    ValueName = "px"
-})
-
--- Thêm Slider cho tốc độ Aimbot
-local AimbotSpeedSlider = TeamSection:AddSlider("AimbotSpeed", {
-    Title = "Tốc độ Aimbot",
-    Default = 1,
-    Min = 0.1,
-    Max = 50,
-    Rounding = 1,
-    ValueName = "x"
-})
-
--- Thêm Toggle cho Team Check
-local TeamCheckToggle = TeamSection:AddToggle("TeamCheck", {
-    Title = "Team Check",
-    Default = false
-})
-
--- Thêm Toggle cho Wallcheck
-local WallcheckToggle = TeamSection:AddToggle("WallcheckToggle", {
-    Title = "Wallcheck",
-    Default = true
-})
-
-AimToggle:OnChanged(function(Value)
-    Configuration.AimbotEnabled = Value
-    AimbotEnabled = Value
-
-    if Value then
-        -- Đảm bảo Camera được định nghĩa
-        local Camera = workspace.CurrentCamera
-        if not Camera then return end
-
-        -- Tạo FOV Circle
-        FOVCircle = Drawing.new("Circle")
-        FOVCircle.Visible = ShowFovToggle.Value
-        FOVCircle.Thickness = 1
-        FOVCircle.Color = FovColorPicker.Value
-        FOVCircle.Filled = false
-        FOVCircle.Transparency = 1
-        FOVCircle.NumSides = 60
-        FOVCircle.Radius = FOVRadius
-
-        -- Cập nhật vị trí FOV Circle
-        local function UpdateFOVCircle()
-            if Camera and Camera.ViewportSize then
-                FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2) + FOVOffset
+        local TargetPart = Target:FindFirstChild(Configuration.AimPart)
+        local NativePart = Player.Character:FindFirstChild(Configuration.AimPart)
+        if Configuration.TeamCheck and _Player.TeamColor == Player.TeamColor then
+            return false
+        elseif Configuration.FriendCheck and _Player:IsFriendsWith(Player.UserId) then
+            return false
+        elseif Configuration.WallCheck then
+            local RayDirection = (TargetPart.Position - NativePart.Position).Unit * (TargetPart.Position - NativePart.Position).Magnitude
+            local RaycastParameters = RaycastParams.new()
+            RaycastParameters.FilterType = Enum.RaycastFilterType.Exclude
+            RaycastParameters.FilterDescendantsInstances = { Player.Character }
+            RaycastParameters.IgnoreWater = not Configuration.WaterCheck
+            local RaycastResult = workspace:Raycast(NativePart.Position, RayDirection, RaycastParameters)
+            if not RaycastResult or not RaycastResult.Instance or not RaycastResult.Instance:FindFirstAncestor(_Player.Name) then
+                return false
             end
+        elseif Configuration.MagnitudeCheck and (TargetPart.Position - NativePart.Position).Magnitude > Configuration.TriggerMagnitude then
+            return false
+        elseif Configuration.TransparencyCheck and Target:FindFirstChild("Head") and Target:FindFirstChild("Head"):IsA("BasePart") and Target:FindFirstChild("Head").Transparency >= Configuration.IgnoredTransparency then
+            return false
+        elseif Configuration.WhitelistedGroupCheck and _Player:IsInGroup(Configuration.WhitelistedGroup) or Configuration.BlacklistedGroupCheck and not _Player:IsInGroup(Configuration.BlacklistedGroup) then
+            return false
+        elseif Configuration.IgnoredPlayersCheck and table.find(Configuration.IgnoredPlayers, _Player.Name) or Configuration.TargetPlayersCheck and not table.find(Configuration.TargetPlayers, _Player.Name) then
+            return false
         end
-
-        -- Kiểm tra xem mục tiêu có trong FOV không
-        local function IsInFOV(position)
-            if not Camera then return false end
-            local screenPosition, onScreen = Camera:WorldToScreenPoint(position)
-            if not onScreen then return false end
-            
-            local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2) + FOVOffset
-            return (Vector2.new(screenPosition.X, screenPosition.Y) - screenCenter).Magnitude <= FOVRadius
-        end
-
-        -- Hàm kiểm tra tầm nhìn
-        local function HasLineOfSight(target)
-            if not WallcheckEnabled then return true end
-            local ray = Ray.new(Camera.CFrame.Position, (target.Position - Camera.CFrame.Position).Unit * 1000)
-            local part, position = workspace:FindPartOnRayWithIgnoreList(ray, {game.Players.LocalPlayer.Character})
-            return part == target or (position - target.Position).Magnitude < 5
-        end
-
-        -- Lấy đầu của người chơi gần nhất trong FOV và có tầm nhìn
-        local function GetClosestPlayerHead()
-            local closestPlayer = nil
-            local shortestDistance = math.huge
-            local localPlayer = game.Players.LocalPlayer
-
-            for _, player in pairs(game.Players:GetPlayers()) do
-                if player ~= localPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChild("Humanoid") then
-                    local head = player.Character.Head
-                    local humanoid = player.Character.Humanoid
-                    
-                    if (not TeamCheck or player.Team ~= localPlayer.Team) and
-                       IsInFOV(head.Position) and 
-                       humanoid.Health > 0 and
-                       humanoid.Health >= minTargetHealth and
-                       HasLineOfSight(head) then
-                        
-                        local distance = (head.Position - Camera.CFrame.Position).Magnitude
-                        if distance <= currentAimbotRange and distance < shortestDistance then
-                            closestPlayer = player
-                            shortestDistance = distance
-                        end
-                    end
-                end
-            end
-
-            return closestPlayer and closestPlayer.Character.Head
-        end
-
--- Hàm Aimbot
-        local function Aimbot()
-            local targetHead = GetClosestPlayerHead()
-            if targetHead and Camera then
-                local targetPos = targetHead.Position
-                local currentCFrame = Camera.CFrame
-                local targetCFrame = CFrame.new(currentCFrame.Position, targetPos)
-                Camera.CFrame = currentCFrame:Lerp(targetCFrame, AimbotSpeed * 0.1)
-            end
-        end
-
-        -- Loop chính
-        if connection then connection:Disconnect() end
-        connection = game:GetService("RunService").RenderStepped:Connect(function()
-            if AimbotEnabled then
-                UpdateFOVCircle()
-                Aimbot()
-            end
-        end)
+        local OffsetIncrement = Configuration.UseOffset and (Configuration.AutoOffset and Vector3.new(0, TargetPart.Position.Y * Configuration.StaticOffsetIncrement * (TargetPart.Position - NativePart.Position).Magnitude / 1000 <= Configuration.MaxAutoOffset and TargetPart.Position.Y * Configuration.StaticOffsetIncrement * (TargetPart.Position - NativePart.Position).Magnitude / 1000 or Configuration.MaxAutoOffset, 0) + Target:FindFirstChildWhichIsA("Humanoid").MoveDirection * Configuration.DynamicOffsetIncrement / 10 or Configuration.OffsetType == "Static" and Vector3.new(0, TargetPart.Position.Y * Configuration.StaticOffsetIncrement / 10, 0) or Configuration.OffsetType == "Dynamic" and Target:FindFirstChildWhichIsA("Humanoid").MoveDirection * Configuration.DynamicOffsetIncrement / 10 or Vector3.new(0, TargetPart.Position.Y * Configuration.StaticOffsetIncrement / 10, 0) + Target:FindFirstChildWhichIsA("Humanoid").MoveDirection * Configuration.DynamicOffsetIncrement / 10) or Vector3.zero
+        local NoiseFrequency = Configuration.UseNoise and Vector3.new(math.random(0.5, 1), math.random(0.5, 1), math.random(0.5, 1)) or Vector3.zero
+        return true, Target, { workspace.CurrentCamera:WorldToViewportPoint(TargetPart.Position + OffsetIncrement + NoiseFrequency) }, TargetPart.Position + OffsetIncrement + NoiseFrequency
     else
-        -- Logic khi tắt Aimbot
-        if connection then
-            connection:Disconnect()
-            connection = nil
-        end
-        if FOVCircle then
-            FOVCircle:Remove()
-            FOVCircle = nil
-        end
+        return false
     end
-end)
-
--- Xử lý các sự kiện cho các phần tử UI
-FovColorPicker:OnChanged(function(Value)
-    if FOVCircle then
-        FOVCircle.Color = Value
-    end
-end)
-
-AimbotRangeDropdown:OnChanged(function(Value)
-    currentAimbotRange = AimbotRanges[Value] or math.huge
-end)
-
-TargetHealthSlider:OnChanged(function(Value)
-    minTargetHealth = Value
-end)
-
-ShowFovToggle:OnChanged(function(Value)
-    if FOVCircle then
-        FOVCircle.Visible = Value
-    end
-end)
-
-FOVSizeSlider:OnChanged(function(Value)
-    FOVRadius = Value
-    if FOVCircle then
-        FOVCircle.Radius = Value
-    end
-end)
-
-FOVHorizontalSlider:OnChanged(function(Value)
-    FOVOffset = Vector2.new(Value, FOVOffset.Y)
-    if FOVCircle then
-        UpdateFOVCircle()
-    end
-end)
-
-FOVVerticalSlider:OnChanged(function(Value)
-    FOVOffset = Vector2.new(FOVOffset.X, Value)
-    if FOVCircle then
-        UpdateFOVCircle()
-    end
-end)
-
-AimbotSpeedSlider:OnChanged(function(Value)
-    AimbotSpeed = Value
-end)
-
-TeamCheckToggle:OnChanged(function(Value)
-    TeamCheck = Value
-end)
-
--- Thêm xử lý sự kiện cho WallcheckToggle
-WallcheckToggle:OnChanged(function(Value)
-    WallcheckEnabled = Value
-end)
----------------------------------------------------------------------------- 
-local SilentAimEnabled = false
-local PredictionEnabled = false
-local PredictionMode = "Dynamic"
-local PredictionAmount = 0.165
-local AimbotEnabled = false
-
-local AimSToggle = TeamSection:AddToggle("SAimToggle", {
-    Title = "Silent Aim",
-    Default = Configuration.SAim
-})
-
-local ModeDropdown = TeamSection:AddDropdown("ModeDropdown", {
-    Title = "Prediction Mode",
-    Values = {"Dynamic", "Static"},
-    Multi = false,
-    Default = 1,
-})
-
-local PredictionToggle = TeamSection:AddToggle("PredictionToggle", {
-    Title = "Aim Prediction",
-    Default = false
-})
-
-local PredictionAmountSlider = TeamSection:AddSlider("PredictionAmount", {
-    Title = "Prediction Amount",
-    Default = 0.165,
-    Min = 0,
-    Max = 1,
-    Rounding = 3,
-    ValueName = "s"
-})
-
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local function SimulateTouchInput()
-    local touchPosition = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y / 2)
-    UserInputService:SendTouchEvent(Enum.UserInputState.Begin, touchPosition, 0)
-    task.wait(0.1)
-    UserInputService:SendTouchEvent(Enum.UserInputState.End, touchPosition, 0)
 end
 
-local function IsTargetVisible(target)
-    local character = LocalPlayer.Character
-    local head = character and (character:FindFirstChild("Head") or character:FindFirstChild("UpperTorso") or character:FindFirstChildWhichIsA("BasePart"))
-    
-    if not head then return false end
 
-    local ray = Ray.new(
-        head.Position,
-        (target.Position - head.Position).Unit * 1000
-    )
-    local params = RaycastParams.new()
-    params.FilterDescendantsInstances = {character, target.Parent}
-    params.FilterType = Enum.RaycastFilterType.Blacklist
+--! TriggerBot Handler
 
-    local result = workspace:Raycast(ray.Origin, ray.Direction, params)
-    return result and (result.Position - target.Position).Magnitude < 5
-end
-
-local function GetClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    local localCharacter = LocalPlayer.Character
-    local localHumanoidRootPart = localCharacter and localCharacter:FindFirstChild("HumanoidRootPart")
-    
-    if not localHumanoidRootPart then return nil end
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local humanoidRootPart = player.Character:FindFirstChild("HumanoidRootPart")
-            if humanoidRootPart and IsTargetVisible(humanoidRootPart) then
-                local distance = (humanoidRootPart.Position - localHumanoidRootPart.Position).Magnitude
-                if distance < shortestDistance then
-                    closestPlayer = player
-                    shortestDistance = distance
-                end
-            end
-        end
+local function HandleTriggerBot()
+    if not DEBUG and Fluent and getfenv().mouse1click and Triggering and (Configuration.SmartTriggerBot and Aiming or not Configuration.SmartTriggerBot) and Mouse.Target and IsReady(Mouse.Target.Parent) then
+        getfenv().mouse1click()
     end
-
-    return closestPlayer
 end
 
-local function GetPredictedPosition(player)
-    if not player or not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+
+--! Visuals Handler
+
+local function Visualize(Object)
+    if DEBUG or not Fluent or not getfenv().Drawing or not Object then
+        return nil
+    elseif string.lower(Object) == "fov" then
+        local FoV = getfenv().Drawing.new("Circle")
+        FoV.Visible = false
+        if FoV.ZIndex then
+            FoV.ZIndex = 2
+        end
+        FoV.Filled = false
+        FoV.NumSides = 1000
+        FoV.Radius = Configuration.FoVRadius
+        FoV.Thickness = Configuration.FoVThickness
+        FoV.Transparency = Configuration.FoVTransparency
+        FoV.Color = Configuration.FoVColour
+        return FoV
+    elseif string.lower(Object) == "espbox" then
+        local ESPBox = getfenv().Drawing.new("Square")
+        ESPBox.Visible = false
+        if ESPBox.ZIndex then
+            ESPBox.ZIndex = 1
+        end
+        ESPBox.Filled = false
+        ESPBox.Thickness = Configuration.ESPThickness
+        ESPBox.Transparency = Configuration.ESPTransparency
+        ESPBox.Color = Configuration.ESPColour
+        return ESPBox
+    elseif string.lower(Object) == "nameesp" then
+        local NameESP = getfenv().Drawing.new("Text")
+        NameESP.Visible = false
+        if NameESP.ZIndex then
+            NameESP.ZIndex = 1
+        end
+        NameESP.Center = true
+        NameESP.Outline = true
+        NameESP.Size = Configuration.NameESPSize
+        NameESP.Transparency = Configuration.ESPTransparency
+        NameESP.Color = Configuration.ESPColour
+        return NameESP
+    elseif string.lower(Object) == "traceresp" then
+        local TracerESP = getfenv().Drawing.new("Line")
+        TracerESP.Visible = false
+        if TracerESP.ZIndex then
+            TracerESP.ZIndex = 1
+        end
+        TracerESP.Thickness = Configuration.ESPThickness
+        TracerESP.Transparency = Configuration.ESPTransparency
+        TracerESP.Color = Configuration.ESPColour
+        return TracerESP
+    else
         return nil
     end
+end
 
-    if not PredictionEnabled then
-        return player.Character.HumanoidRootPart.Position
+local Visuals = { FoV = Visualize("FoV") }
+
+local function ClearVisual(Visual, Key)
+    local FoundVisual = table.find(Visuals, Visual)
+    if Visual and (FoundVisual or Key and Key == "FoV") then
+        if Visual.Destroy then
+            Visual:Destroy()
+        elseif Visual.Remove then
+            Visual:Remove()
+        end
+        if FoundVisual then
+            table.remove(Visuals, FoundVisual)
+        elseif Key and Key == "FoV" then
+            Visuals["FoV"] = nil
+        end
     end
+end
 
-    local velocity = player.Character.HumanoidRootPart.Velocity
-    local distance = (player.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-    
-    if PredictionMode == "Dynamic" then
-        local timeToHit = distance / 1000
-        return player.Character.HumanoidRootPart.Position + (velocity * timeToHit)
+local function ClearVisuals()
+    for Key, Visual in next, Visuals do
+        ClearVisual(Visual, Key)
+    end
+end
+
+local function VisualizeFoV()
+    if not Fluent then
+        return ClearVisuals()
+    end
+    local MouseLocation = UserInputService:GetMouseLocation()
+    Visuals.FoV.Position = Vector2.new(MouseLocation.X, MouseLocation.Y)
+    Visuals.FoV.Radius = Configuration.FoVRadius
+    Visuals.FoV.Thickness = Configuration.FoVThickness
+    Visuals.FoV.Transparency = Configuration.FoVTransparency
+    Visuals.FoV.Color = Configuration.FoVColour
+    Visuals.FoV.Visible = Configuration.ShowFoV
+end
+
+
+--! ESP Library
+
+local ESPLibrary = {}
+
+function ESPLibrary:Initialize(Target)
+    if not Fluent then
+        ClearVisuals()
+        return nil
+    elseif not Target then
+        return nil
+    end
+    local self = setmetatable({}, { __index = ESPLibrary })
+    self.Player = Players:GetPlayerFromCharacter(Target)
+    self.Character = Target
+    self.ESPBox = Visualize("ESPBox")
+    self.NameESP = Visualize("NameESP")
+    self.TracerESP = Visualize("TracerESP")
+    table.insert(Visuals, self.ESPBox)
+    table.insert(Visuals, self.NameESP)
+    table.insert(Visuals, self.TracerESP)
+    local Head = self.Character:FindFirstChild("Head")
+    local HumanoidRootPart = self.Character:FindFirstChild("HumanoidRootPart")
+    local Humanoid = self.Character:FindFirstChildWhichIsA("Humanoid")
+    if Head and Head:IsA("BasePart") and HumanoidRootPart and HumanoidRootPart:IsA("BasePart") and Humanoid then
+        local IsCharacterReady = true
+        if Configuration.SmartESP then
+            IsCharacterReady = IsReady(self.Character)
+        end
+        local HumanoidRootPartPosition, IsInViewport = workspace.CurrentCamera:WorldToViewportPoint(HumanoidRootPart.Position)
+        local TopPosition = workspace.CurrentCamera:WorldToViewportPoint(Head.Position + Vector3.new(0, 0.5, 0))
+        local BottomPosition = workspace.CurrentCamera:WorldToViewportPoint(HumanoidRootPart.Position - Vector3.new(0, 3, 0))
+        if IsInViewport then
+            self.ESPBox.Size = Vector2.new(2350 / HumanoidRootPartPosition.Z, TopPosition.Y - BottomPosition.Y)
+            self.ESPBox.Position = Vector2.new(HumanoidRootPartPosition.X - self.ESPBox.Size.X / 2, HumanoidRootPartPosition.Y - self.ESPBox.Size.Y / 2)
+            self.NameESP.Text = string.format("@%s | %s HP | %s studs", self.Player.Name, tostring(math.round(Humanoid.Health)), Player.Character and Player.Character:FindFirstChild("Head") and Player.Character:FindFirstChild("Head"):IsA("BasePart") and tostring(math.round((Head.Position - Player.Character:FindFirstChild("Head").Position).Magnitude)) or "N/A")
+            self.NameESP.Position = Vector2.new(HumanoidRootPartPosition.X, (HumanoidRootPartPosition.Y + self.ESPBox.Size.Y / 2) - 25)
+            self.TracerESP.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
+            self.TracerESP.To = Vector2.new(HumanoidRootPartPosition.X, HumanoidRootPartPosition.Y - self.ESPBox.Size.Y / 2)
+            if Configuration.ESPUseTeamColour and not Configuration.RainbowVisuals then
+                local TeamColour = self.Player.TeamColor.Color
+                self.ESPBox.Color = TeamColour
+                self.NameESP.Color = TeamColour
+                self.TracerESP.Color = TeamColour
+            end
+        end
+        self.ESPBox.Visible = Configuration.ESPBox and IsCharacterReady and IsInViewport
+        self.NameESP.Visible = Configuration.NameESP and IsCharacterReady and IsInViewport
+        self.TracerESP.Visible = Configuration.TracerESP and IsCharacterReady and IsInViewport
+    end
+    return self
+end
+
+function ESPLibrary:Visualize()
+    if not Fluent then
+        return ClearVisuals()
+    elseif not self.Character then
+        return self:Disconnect()
+    end
+    local Head = self.Character:FindFirstChild("Head")
+    local HumanoidRootPart = self.Character:FindFirstChild("HumanoidRootPart")
+    local Humanoid = self.Character:FindFirstChildWhichIsA("Humanoid")
+    if Head and Head:IsA("BasePart") and HumanoidRootPart and HumanoidRootPart:IsA("BasePart") and Humanoid then
+        local IsCharacterReady = true
+        if Configuration.SmartESP then
+            IsCharacterReady = IsReady(self.Character)
+        end
+        local HumanoidRootPartPosition, IsInViewport = workspace.CurrentCamera:WorldToViewportPoint(HumanoidRootPart.Position)
+        local TopPosition = workspace.CurrentCamera:WorldToViewportPoint(Head.Position + Vector3.new(0, 0.5, 0))
+        local BottomPosition = workspace.CurrentCamera:WorldToViewportPoint(HumanoidRootPart.Position - Vector3.new(0, 3, 0))
+        if IsInViewport then
+            self.ESPBox.Size = Vector2.new(2350 / HumanoidRootPartPosition.Z, TopPosition.Y - BottomPosition.Y)
+            self.ESPBox.Position = Vector2.new(HumanoidRootPartPosition.X - self.ESPBox.Size.X / 2, HumanoidRootPartPosition.Y - self.ESPBox.Size.Y / 2)
+            self.ESPBox.Thickness = Configuration.ESPThickness
+            self.ESPBox.Transparency = Configuration.ESPTransparency
+            self.NameESP.Text = string.format("@%s | %s HP | %s studs", self.Player.Name, tostring(math.round(Humanoid.Health)), Player.Character and Player.Character:FindFirstChild("Head") and Player.Character:FindFirstChild("Head"):IsA("BasePart") and tostring(math.round((Head.Position - Player.Character:FindFirstChild("Head").Position).Magnitude)) or "N/A")
+            self.NameESP.Size = Configuration.NameESPSize
+            self.NameESP.Transparency = Configuration.ESPTransparency
+            self.NameESP.Position = Vector2.new(HumanoidRootPartPosition.X, (HumanoidRootPartPosition.Y + self.ESPBox.Size.Y / 2) - 25)
+            self.TracerESP.Thickness = Configuration.ESPThickness
+            self.TracerESP.Transparency = Configuration.ESPTransparency
+            self.TracerESP.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
+            self.TracerESP.To = Vector2.new(HumanoidRootPartPosition.X, HumanoidRootPartPosition.Y - self.ESPBox.Size.Y / 2)
+            if Configuration.ESPUseTeamColour and not Configuration.RainbowVisuals then
+                local TeamColour = self.Player.TeamColor.Color
+                self.ESPBox.Color = TeamColour
+                self.NameESP.Color = TeamColour
+                self.TracerESP.Color = TeamColour
+            else
+                self.ESPBox.Color = Configuration.ESPColour
+                self.NameESP.Color = Configuration.ESPColour
+                self.TracerESP.Color = Configuration.ESPColour
+            end
+        end
+        self.ESPBox.Visible = Configuration.ESPBox and IsCharacterReady and IsInViewport
+        self.NameESP.Visible = Configuration.NameESP and IsCharacterReady and IsInViewport
+        self.TracerESP.Visible = Configuration.TracerESP and IsCharacterReady and IsInViewport
     else
-        return player.Character.HumanoidRootPart.Position + (velocity * PredictionAmount)
+        self.ESPBox.Visible = false
+        self.NameESP.Visible = false
+        self.TracerESP.Visible = false
     end
 end
 
-local function SilentAim()
-    local closestPlayer = GetClosestPlayer()
-    if not closestPlayer then return end
+function ESPLibrary:Disconnect()
+    self.Player = nil
+    self.Character = nil
+    ClearVisual(self.ESPBox)
+    ClearVisual(self.NameESP)
+    ClearVisual(self.TracerESP)
+end
 
-    local targetPart = closestPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not targetPart then return end
 
-    local predictedPosition = GetPredictedPosition(closestPlayer)
-    if not predictedPosition then return end
-    
-    local randomOffset = Vector3.new(
-        math.random(-10, 10) / 100,
-        math.random(-10, 10) / 100,
-        math.random(-10, 10) / 100
-    )
-    local targetPosition = predictedPosition + randomOffset
-    
-    local oldNamecall
-    oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-        local args = {...}
-        local method = getnamecallmethod()
+--! Tracking Handler
 
-        if SilentAimEnabled and method == "FireServer" and self.Name == "WeaponRemote" then
-            args[2] = targetPosition
+local Tracking = {}
+local Connections = {}
+
+local function VisualizeESP()
+    for _, Tracked in next, Tracking do
+        Tracked:Visualize()
+    end
+end
+
+local function DisconnectTracking(Key)
+    if Key and Tracking[Key] then
+        Tracking[Key]:Disconnect()
+        table.remove(Tracking, Key)
+    end
+end
+
+local function DisconnectConnection(Key)
+    if Key and Connections[Key] then
+        for _, Connection in next, Connections[Key] do
+            Connection:Disconnect()
         end
-
-        return oldNamecall(self, unpack(args))
-    end))
-end
-
-local smoothnessFactor = 0.8
-
-local function SmoothAdjustBulletTrajectory(bullet, targetPosition)
-    local currentDirection = bullet.CFrame.LookVector
-    local targetDirection = (targetPosition - bullet.Position).Unit
-    local smoothedDirection = currentDirection:Lerp(targetDirection, smoothnessFactor)
-    
-    bullet.CFrame = CFrame.new(bullet.Position, bullet.Position + smoothedDirection)
-    bullet.Velocity = smoothedDirection * bullet.Velocity.Magnitude
-end
-
-local adjustedBullets = {}
-
-local function TeleportBulletToTarget(bullet)
-    local closestPlayer = GetClosestPlayer()
-    if not closestPlayer then return end
-
-    local targetPart = closestPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not targetPart then return end
-
-    local distance = (targetPart.Position - bullet.Position).Magnitude
-    if distance < 10 then
-        local randomOffset = Vector3.new(
-            math.random(-20, 20) / 100,
-            math.random(-20, 20) / 100,
-            math.random(-20, 20) / 100
-        )
-        bullet.Position = targetPart.Position + randomOffset
+        table.remove(Connections, Key)
     end
 end
 
-local maxAngle = math.rad(30)
-
-local function LimitAngle(currentDirection, targetDirection)
-    local angle = math.acos(currentDirection:Dot(targetDirection))
-    if angle > maxAngle then
-        local axis = currentDirection:Cross(targetDirection).Unit
-        return CFrame.fromAxisAngle(axis, maxAngle) * currentDirection
+local function DisconnectConnections()
+    for Key, _ in next, Connections do
+        DisconnectConnection(Key)
     end
-    return targetDirection
+    for Key, _ in next, Tracking do
+        DisconnectTracking(Key)
+    end
 end
 
-local function AutoFire()
-    if not SilentAimEnabled then return end
-
-    local closestPlayer = GetClosestPlayer()
-    if not closestPlayer then return end
-
-    ReplicatedStorage.WeaponRemote:FireServer()
+local function DisconnectAimbot()
+    ResetAimbotFields()
+    Triggering = false
+    DisconnectConnections()
+    ClearVisuals()
 end
 
-local updateInterval = 0.1
-local lastUpdateTime = 0
-
-local function UpdateSilentAim()
-    local currentTime = tick()
-    if currentTime - lastUpdateTime < updateInterval then
-        return
+local function CharacterAdded(_Character)
+    if _Character then
+        local _Player = Players:GetPlayerFromCharacter(_Character)
+        Tracking[_Player.UserId] = ESPLibrary:Initialize(_Character)
     end
-    lastUpdateTime = currentTime
+end
 
-    local closestPlayer = GetClosestPlayer()
-    if not closestPlayer then return end
-
-    local targetPart = closestPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not targetPart then return end
-
-    local predictedPosition = GetPredictedPosition(closestPlayer)
-    if not predictedPosition then return end
-
-    for _, bullet in ipairs(workspace:GetDescendants()) do
-        if bullet:IsA("Part") and bullet.Name == "Bullet" then
-            local currentDirection = bullet.CFrame.LookVector
-            local targetDirection = (predictedPosition - bullet.Position).Unit
-            local limitedDirection = LimitAngle(currentDirection, targetDirection)
-            
-            SmoothAdjustBulletTrajectory(bullet, bullet.Position + limitedDirection)
-            TeleportBulletToTarget(bullet)
+local function CharacterRemoving(_Character)
+    if _Character then
+        for Key, Tracked in next, Tracking do
+            if Tracked.Character == _Character then
+                DisconnectTracking(Key)
+            end
         end
     end
-
-    SimulateTouchInput()
-    AutoFire()
 end
 
-local function UpdateSilentAimCoroutine()
-    while SilentAimEnabled do
-        UpdateSilentAim()
-        RunService.Heartbeat:Wait()
+local function InitializePlayers()
+    if not DEBUG and getfenv().Drawing then
+        for _, _Player in next, Players:GetPlayers() do
+            if _Player ~= Player and _Player.Character then
+                local _Character = _Player.Character
+                CharacterAdded(_Character)
+                Connections[_Player.UserId] = { _Player.CharacterAdded:Connect(CharacterAdded), _Player.CharacterRemoving:Connect(CharacterRemoving) }
+            end
+        end
     end
 end
 
-AimSToggle:OnChanged(function(Value)
-    SilentAimEnabled = Value
-    Configuration.SAim = Value
-    if Value then
-        coroutine.wrap(UpdateSilentAimCoroutine)()
+task.spawn(InitializePlayers)
+
+
+--! Player Events
+
+local OnTeleport; OnTeleport = Player.OnTeleport:Connect(function()
+    if DEBUG or not Fluent or not getfenv().queue_on_teleport then
+        OnTeleport:Disconnect()
+    else
+        getfenv().queue_on_teleport("getfenv().loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ttwizz/Open-Aimbot/master/source.lua\", true))()")
+        OnTeleport:Disconnect()
     end
 end)
 
-PredictionToggle:OnChanged(function(Value)
-    PredictionEnabled = Value
+local PlayerAdded; PlayerAdded = Players.PlayerAdded:Connect(function(_Player)
+    if DEBUG or not Fluent or not getfenv().Drawing then
+        PlayerAdded:Disconnect()
+    elseif _Player ~= Player then
+        Connections[_Player.UserId] = { _Player.CharacterAdded:Connect(CharacterAdded), _Player.CharacterRemoving:Connect(CharacterRemoving) }
+    end
 end)
 
-ModeDropdown:OnChanged(function(Value)
-    PredictionMode = Value
-    PredictionAmountSlider.Visible = (Value == "Static")
+local PlayerRemoving; PlayerRemoving = Players.PlayerRemoving:Connect(function(_Player)
+    if Fluent then
+        if _Player == Player then
+            Fluent:Destroy()
+            DisconnectAimbot()
+            PlayerRemoving:Disconnect()
+        else
+            DisconnectConnection(_Player.UserId)
+            DisconnectTracking(_Player.UserId)
+        end
+    else
+        PlayerRemoving:Disconnect()
+    end
 end)
 
-PredictionAmountSlider:OnChanged(function(Value)
-    PredictionAmount = Value
-end)
 
--- Thêm một số tính năng mới
+--! Aimbot Loop
 
-local function CalculateLeadshot(targetPosition, targetVelocity, projectileSpeed)
-    local distance = (targetPosition - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-    local timeToHit = distance / projectileSpeed
-    return targetPosition + targetVelocity * timeToHit
-end
-
-local function ApplyBulletDrop(bullet, initialVelocity, gravity)
-    local elapsedTime = tick() - bullet.CreationTime
-    local dropAmount = 0.5 * gravity * elapsedTime^2
-    bullet.Position = bullet.Position - Vector3.new(0, dropAmount, 0)
-end
-
-local projectileSpeed = 1000 -- Adjust this value based on the game's weapon projectile speed
-local gravity = Vector3.new(0, -9.81, 0)
-
-RunService.Heartbeat:Connect(function()
-    if SilentAimEnabled then
-        local closestPlayer = GetClosestPlayer()
-        if closestPlayer then
-            local targetPart = closestPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if targetPart then
-                local targetPosition = targetPart.Position
-                local targetVelocity = targetPart.Velocity
-                
-                local leadshotPosition = CalculateLeadshot(targetPosition, targetVelocity, projectileSpeed)
-                
-                for _, bullet in ipairs(workspace:GetDescendants()) do
-                    if bullet:IsA("Part") and bullet.Name == "Bullet" then
-                        if not bullet:GetAttribute("CreationTime") then
-                            bullet:SetAttribute("CreationTime", tick())
-                        end
-                        
-                        SmoothAdjustBulletTrajectory(bullet, leadshotPosition)
-                        ApplyBulletDrop(bullet, projectileSpeed, gravity.Y)
+local AimbotLoop; AimbotLoop = RunService.RenderStepped:Connect(function()
+    if Fluent.Unloaded then
+        Fluent = nil
+        DisconnectAimbot()
+        AimbotLoop:Disconnect()
+    elseif not Configuration.Aimbot then
+        ResetAimbotFields()
+    elseif not Configuration.TriggerBot then
+        Triggering = false
+    end
+    HandleTriggerBot()
+    if not DEBUG and getfenv().Drawing then
+        VisualizeFoV()
+        VisualizeESP()
+    end
+    if Aiming then
+        local OldTarget = Target
+        local Closest = math.huge
+        if not IsReady(OldTarget) then
+            for _, _Player in next, Players:GetPlayers() do
+                local IsCharacterReady, Character, PartViewportPosition = IsReady(_Player.Character)
+                if IsCharacterReady and PartViewportPosition[2] then
+                    local Magnitude = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(PartViewportPosition[1].X, PartViewportPosition[1].Y)).Magnitude
+                    if Magnitude <= Closest and Magnitude <= (Configuration.FoVCheck and Configuration.FoVRadius or Closest) then
+                        Target = Character
+                        Closest = Magnitude
                     end
                 end
             end
         end
-    end
-end)
-
--- Thêm một hệ thống phát hiện anti-cheat đơn giản
-local function DetectAntiCheat()
-    for _, v in ipairs(game:GetDescendants()) do
-        if v:IsA("LocalScript") and v.Name:lower():match("anticheat") then
-            warn("Possible anti-cheat detected: " .. v:GetFullName())
-        end
-    end
-end
-
-DetectAntiCheat()
-
--- Thêm tính năng tự động né đạn
-local function AutoDodge()
-    local character = LocalPlayer.Character
-    if not character then return end
-    
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid then return end
-    
-    for _, bullet in ipairs(workspace:GetDescendants()) do
-        if bullet:IsA("Part") and bullet.Name == "Bullet" and not bullet:IsDescendantOf(character) then
-            local distance = (bullet.Position - character.HumanoidRootPart.Position).Magnitude
-            if distance < 10 then
-                local dodgeDirection = (character.HumanoidRootPart.Position - bullet.Position).Unit
-                humanoid:Move(dodgeDirection * 10)
-            end
-        end
-    end
-end
-
-RunService.Heartbeat:Connect(AutoDodge)
-----------------------------------------------------------------------------
-local DinhvidoToggle = MainSection:AddToggle("badoToggle", {
-    Title = "Định vị 360",
-    Default = Configuration.bado
-})
-
-local TeamCheckToggle = MainSection:AddToggle("teamCheckToggle", {
-    Title = "Team Check",
-    Default = false
-})
-
-local SizeSlider = MainSection:AddSlider("sizeSlider", {
-    Title = "Kích thước chỉ báo",
-    Default = 40,
-    Min = 20,
-    Max = 100,
-    Rounding = 0,
-    Callback = function(Value)
-        -- Cập nhật kích thước cho tất cả các chỉ báo hiện có
-        for _, indicator in pairs(indicators) do
-            indicator.Size = UDim2.new(0, Value, 0, Value)
-        end
-    end
-})
-
-local updateConnection
-local indicators = {}
-local teamCheck = false
-local indicatorSize = 40
-
-DinhvidoToggle:OnChanged(function(Value)
-    Configuration.do360ESPEnabled = Value
-    if Value then
-        -- Tạo ScreenGui nếu chưa tồn tại
-        if not game.Players.LocalPlayer.PlayerGui:FindFirstChild("ESP360Gui") then
-            local ScreenGui = Instance.new("ScreenGui")
-            ScreenGui.Name = "ESP360Gui"
-            ScreenGui.ResetOnSpawn = false
-            ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-            ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
-        end
-
-        local function createIndicator()
-            local indicator = Instance.new("ImageLabel")
-            indicator.Size = UDim2.new(0, indicatorSize, 0, indicatorSize)
-            indicator.BackgroundTransparency = 1
-            indicator.Image = "rbxassetid://18341831594"
-            indicator.ImageColor3 = Color3.new(1, 1, 1)
-            indicator.ImageTransparency = 0
-            
-            indicator.Parent = game.Players.LocalPlayer.PlayerGui.ESP360Gui
-            return indicator
-        end
-
-        local function updateIndicators()
-            for _, player in ipairs(game.Players:GetPlayers()) do
-                if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    -- Kiểm tra Team Check
-                    if teamCheck and player.Team == game.Players.LocalPlayer.Team then
-                        if indicators[player] then
-                            indicators[player].Visible = false
-                        end
-                        continue
-                    end
-
-                    local indicator = indicators[player]
-                    if not indicator then
-                        indicator = createIndicator()
-                        indicators[player] = indicator
-                    end
-                    
-                    local playerPos = player.Character.HumanoidRootPart.Position
-                    local cameraPos = workspace.CurrentCamera.CFrame.Position
-                    local cameraLookVector = workspace.CurrentCamera.CFrame.LookVector
-                    
-                    local relativePos = (playerPos - cameraPos).Unit
-                    local dotProduct = cameraLookVector:Dot(relativePos)
-                    local angle = math.acos(dotProduct)
-                    
-                    local cross = cameraLookVector:Cross(relativePos)
-                    if cross.Y < 0 then
-                        angle = -angle
-                    end
-                    
-                    local screenSize = workspace.CurrentCamera.ViewportSize
-                    local radius = math.min(screenSize.X, screenSize.Y) * 0.45
-                    local centerX, centerY = screenSize.X / 2, screenSize.Y / 2
-                    
-                    local adjustedAngle = angle + math.pi/2
-                    
-                    local x = centerX + radius * math.cos(adjustedAngle)
-                    local y = centerY - radius * math.sin(adjustedAngle)
-                    
-                    indicator.Position = UDim2.new(0, x - indicator.AbsoluteSize.X/2, 0, y - indicator.AbsoluteSize.Y/2)
-                    indicator.Rotation = math.deg(angle)
-
-                    local _, onScreen = workspace.CurrentCamera:WorldToScreenPoint(playerPos)
-                    
-                    indicator.Visible = not onScreen
+        local IsTargetReady, _, PartViewportPosition, PartWorldPosition = IsReady(Target)
+        if IsTargetReady then
+            if not DEBUG and getfenv().mousemoverel and Configuration.UseMouseMoving then
+                if PartViewportPosition[2] then
+                    ResetAimbotFields(true, true)
+                    local MouseLocation = UserInputService:GetMouseLocation()
+                    local Sensitivity = Configuration.UseSensitivity and Configuration.Sensitivity / 10 or 10
+                    getfenv().mousemoverel((PartViewportPosition[1].X - MouseLocation.X) / Sensitivity, (PartViewportPosition[1].Y - MouseLocation.Y) / Sensitivity)
                 else
-                    if indicators[player] then
-                        indicators[player].Visible = false
-                    end
+                    ResetAimbotFields(true)
+                end
+            else
+                UserInputService.MouseDeltaSensitivity = 0
+                if Configuration.UseSensitivity then
+                    Tween = TweenService:Create(workspace.CurrentCamera, TweenInfo.new(math.clamp(Configuration.Sensitivity, 9, 99) / 100, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), { CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, PartWorldPosition) })
+                    Tween:Play()
+                else
+                    workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, PartWorldPosition)
                 end
             end
-        end
-
-        updateConnection = game:GetService("RunService").RenderStepped:Connect(updateIndicators)
-
-        game.Players.PlayerRemoving:Connect(function(player)
-            if indicators[player] then
-                indicators[player]:Destroy()
-                indicators[player] = nil
-            end
-        end)
-
-    else
-        -- Tắt ESP 360
-        if updateConnection then
-            updateConnection:Disconnect()
-        end
-        for _, indicator in pairs(indicators) do
-            if indicator then
-                indicator:Destroy()
-            end
-        end
-        indicators = {}
-        if game.Players.LocalPlayer.PlayerGui:FindFirstChild("ESP360Gui") then
-            game.Players.LocalPlayer.PlayerGui.ESP360Gui:Destroy()
+        else
+            ResetAimbotFields(true)
         end
     end
 end)
-
-TeamCheckToggle:OnChanged(function(Value)
-    teamCheck = Value
-end)
-
-SizeSlider:OnChanged(function(Value)
-    indicatorSize = Value
-    for _, indicator in pairs(indicators) do
-        indicator.Size = UDim2.new(0, Value, 0, Value)
-    end
-end)
----------------------------------------------------------------------------- 
--- Phần code hiện tại của bạn
-
--- Thêm vào cuối file
-local UIVisible = true
-
-local function ToggleUI()
-    UIVisible = not UIVisible
-    Window.Enabled = UIVisible
-end
-
-local UserInputService = game:GetService("UserInputService")
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.F1 then
-        ToggleUI()
-    end
-end)
-
