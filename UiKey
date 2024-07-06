@@ -17,29 +17,12 @@ f1Button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
 f1Button.BorderSizePixel = 0
 f1Button.Image = "rbxassetid://18331652497"
 f1Button.ImageColor3 = Color3.new(1, 1, 1)
-f1Button.ZIndex = 2
 f1Button.Parent = screenGui
 
 -- Tạo UICorner để bo tròn góc nút F1
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = f1Button
-
--- Tạo khung viền phát sáng
-local glowFrame = Instance.new("Frame")
-glowFrame.Name = "GlowFrame"
-glowFrame.Size = UDim2.new(1, 20, 1, 20)
-glowFrame.Position = UDim2.new(0, -10, 0, -10)
-glowFrame.BackgroundTransparency = 0.2
-glowFrame.BackgroundColor3 = Color3.new(0, 1, 1)  -- Màu xanh lam cố định
-glowFrame.BorderSizePixel = 0
-glowFrame.ZIndex = 1
-glowFrame.Parent = f1Button
-
--- Tạo UICorner cho khung viền
-local glowCorner = Instance.new("UICorner")
-glowCorner.CornerRadius = UDim.new(0, 15)
-glowCorner.Parent = glowFrame
 
 -- Tạo hiệu ứng khi nhấn nút
 local function buttonEffect()
