@@ -28,42 +28,18 @@ corner.Parent = f1Button
 -- Tạo khung viền phát sáng
 local glowFrame = Instance.new("Frame")
 glowFrame.Name = "GlowFrame"
-glowFrame.Size = UDim2.new(1, 7, 1, 7)
-glowFrame.Position = UDim2.new(0, -4, 0, -4)
+glowFrame.Size = UDim2.new(1, 20, 1, 20)
+glowFrame.Position = UDim2.new(0, -10, 0, -10)
 glowFrame.BackgroundTransparency = 0.2
-glowFrame.BackgroundColor3 = Color3.new(1, 1, 1)
+glowFrame.BackgroundColor3 = Color3.new(0, 1, 1)  -- Màu xanh lam cố định
 glowFrame.BorderSizePixel = 0
-glowFrame.ZIndex = 0
+glowFrame.ZIndex = 1
 glowFrame.Parent = f1Button
 
 -- Tạo UICorner cho khung viền
 local glowCorner = Instance.new("UICorner")
 glowCorner.CornerRadius = UDim.new(0, 15)
 glowCorner.Parent = glowFrame
-
--- Thêm UIGradient cho hiệu ứng sáng hơn
-local gradient = Instance.new("UIGradient")
-gradient.Rotation = 60
-gradient.Parent = glowFrame
-
--- Tạo hiệu ứng nhấp nháy cho viền
-local function glowEffect()
-    local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
-    
-    -- Tween cho màu sắc
-    local colorTween = TweenService:Create(glowFrame, tweenInfo, {BackgroundColor3 = Color3.new(0, 1, 1)})
-    colorTween:Play()
-    
-    -- Tween cho gradient
-    local gradientTween = TweenService:Create(gradient, tweenInfo, {
-        Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-            ColorSequenceKeypoint.new(0.5, Color3.new(0, 1, 1)),
-            ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
-        }
-    })
-    gradientTween:Play()
-end
 
 -- Tạo hiệu ứng khi nhấn nút
 local function buttonEffect()
@@ -132,6 +108,3 @@ UserInputService.InputChanged:Connect(function(input)
         update(input)
     end
 end)
-
--- Bắt đầu hiệu ứng nhấp nháy
-glowEffect()
