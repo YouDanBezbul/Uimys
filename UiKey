@@ -1,0 +1,137 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+-- Tạo ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MobileKeyboardGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Tạo nút F1
+local f1Button = Instance.new("ImageButton")
+f1Button.Name = "F1Button"
+f1Button.Size = UDim2.new(0, 50, 0, 50)
+f1Button.Position = UDim2.new(0, 150, 1, -505)
+f1Button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+f1Button.BorderSizePixel = 0
+f1Button.Image = "rbxassetid://18331652497"
+f1Button.ImageColor3 = Color3.new(1, 1, 1)
+f1Button.ZIndex = 2
+f1Button.Parent = screenGui
+
+-- Tạo UICorner để bo tròn góc nút F1
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = f1Button
+
+-- Tạo khung viền phát sáng
+local glowFrame = Instance.new("Frame")
+glowFrame.Name = "GlowFrame"
+glowFrame.Size = UDim2.new(1, 7, 1, 7)
+glowFrame.Position = UDim2.new(0, -4, 0, -4)
+glowFrame.BackgroundTransparency = 0.2
+glowFrame.BackgroundColor3 = Color3.new(1, 1, 1)
+glowFrame.BorderSizePixel = 0
+glowFrame.ZIndex = 0
+glowFrame.Parent = f1Button
+
+-- Tạo UICorner cho khung viền
+local glowCorner = Instance.new("UICorner")
+glowCorner.CornerRadius = UDim.new(0, 15)
+glowCorner.Parent = glowFrame
+
+-- Thêm UIGradient cho hiệu ứng sáng hơn
+local gradient = Instance.new("UIGradient")
+gradient.Rotation = 60
+gradient.Parent = glowFrame
+
+-- Tạo hiệu ứng nhấp nháy cho viền
+local function glowEffect()
+    local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true)
+    
+    -- Tween cho màu sắc
+    local colorTween = TweenService:Create(glowFrame, tweenInfo, {BackgroundColor3 = Color3.new(0, 1, 1)})
+    colorTween:Play()
+    
+    -- Tween cho gradient
+    local gradientTween = TweenService:Create(gradient, tweenInfo, {
+        Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+            ColorSequenceKeypoint.new(0.5, Color3.new(0, 1, 1)),
+            ColorSequenceKeypoint.new(1, Color3.new(1, 1, 1))
+        }
+    })
+    gradientTween:Play()
+end
+
+-- Tạo hiệu ứng khi nhấn nút
+local function buttonEffect()
+    local goalIn = {Size = UDim2.new(0, 45, 0, 45)}
+    local goalOut = {Size = UDim2.new(0, 50, 0, 50)}
+    local tweenInfoIn = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tweenInfoOut = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    
+    local tweenIn = TweenService:Create(f1Button, tweenInfoIn, goalIn)
+    local tweenOut = TweenService:Create(f1Button, tweenInfoOut, goalOut)
+    
+    tweenIn:Play()
+    tweenIn.Completed:Connect(function()
+        tweenOut:Play()
+    end)
+end
+
+-- Hàm để kích hoạt phím F1
+local function activateF1()
+    local virtualInput = Instance.new("VirtualInputManager")
+    virtualInput:SendKeyEvent(true, Enum.KeyCode.F1, false, game)
+    wait(0.1)
+    virtualInput:SendKeyEvent(false, Enum.KeyCode.F1, false, game)
+end
+
+-- Kết nối sự kiện nhấn nút
+f1Button.MouseButton1Click:Connect(function()
+    buttonEffect()
+    activateF1()
+end)
+
+-- Cho phép kéo nút F1
+local dragging
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    f1Button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                                  startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+f1Button.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = f1Button.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+f1Button.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Bắt đầu hiệu ứng nhấp nháy
+glowEffect()
