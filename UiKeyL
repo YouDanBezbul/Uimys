@@ -8,21 +8,21 @@ screenGui.Name = "MobileKeyboardGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Tạo nút F1
-local f1Button = Instance.new("ImageButton")
-f1Button.Name = "F1Button"
-f1Button.Size = UDim2.new(0, 50, 0, 50)
-f1Button.Position = UDim2.new(0, 150, 1, -505)
-f1Button.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-f1Button.BorderSizePixel = 0
-f1Button.Image = "rbxassetid://18331652497"
-f1Button.ImageColor3 = Color3.new(1, 1, 1)
-f1Button.Parent = screenGui
+-- Tạo nút LeftControl
+local ctrlButton = Instance.new("ImageButton")
+ctrlButton.Name = "CtrlButton"
+ctrlButton.Size = UDim2.new(0, 50, 0, 50)
+ctrlButton.Position = UDim2.new(0, 150, 1, -505)
+ctrlButton.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+ctrlButton.BorderSizePixel = 0
+ctrlButton.Image = "rbxassetid://18331652497"  -- Bạn có thể thay đổi ID này thành một hình ảnh phù hợp với LeftControl
+ctrlButton.ImageColor3 = Color3.new(1, 1, 1)
+ctrlButton.Parent = screenGui
 
--- Tạo UICorner để bo tròn góc nút F1
+-- Tạo UICorner để bo tròn góc nút
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 10)
-corner.Parent = f1Button
+corner.Parent = ctrlButton
 
 -- Tạo hiệu ứng khi nhấn nút
 local function buttonEffect()
@@ -31,8 +31,8 @@ local function buttonEffect()
     local tweenInfoIn = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     local tweenInfoOut = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     
-    local tweenIn = TweenService:Create(f1Button, tweenInfoIn, goalIn)
-    local tweenOut = TweenService:Create(f1Button, tweenInfoOut, goalOut)
+    local tweenIn = TweenService:Create(ctrlButton, tweenInfoIn, goalIn)
+    local tweenOut = TweenService:Create(ctrlButton, tweenInfoOut, goalOut)
     
     tweenIn:Play()
     tweenIn.Completed:Connect(function()
@@ -40,21 +40,21 @@ local function buttonEffect()
     end)
 end
 
--- Hàm để kích hoạt phím F1
-local function activateF1()
+-- Hàm để kích hoạt phím LeftControl
+local function activateLeftControl()
     local virtualInput = Instance.new("VirtualInputManager")
-    virtualInput:SendKeyEvent(true, Enum.KeyCode.F1, false, game)
+    virtualInput:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
     wait(0.1)
-    virtualInput:SendKeyEvent(false, Enum.KeyCode.F1, false, game)
+    virtualInput:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
 end
 
 -- Kết nối sự kiện nhấn nút
-f1Button.MouseButton1Click:Connect(function()
+ctrlButton.MouseButton1Click:Connect(function()
     buttonEffect()
-    activateF1()
+    activateLeftControl()
 end)
 
--- Cho phép kéo nút F1
+-- Cho phép kéo nút
 local dragging
 local dragInput
 local dragStart
@@ -62,15 +62,15 @@ local startPos
 
 local function update(input)
     local delta = input.Position - dragStart
-    f1Button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                                  startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    ctrlButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                                    startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 
-f1Button.InputBegan:Connect(function(input)
+ctrlButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
-        startPos = f1Button.Position
+        startPos = ctrlButton.Position
         
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
@@ -80,7 +80,7 @@ f1Button.InputBegan:Connect(function(input)
     end
 end)
 
-f1Button.InputChanged:Connect(function(input)
+ctrlButton.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
