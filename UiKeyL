@@ -43,9 +43,9 @@ end
 -- Hàm để kích hoạt phím LeftControl
 local function activateLeftControl()
     local virtualInput = Instance.new("VirtualInputManager")
-    virtualInput:SendKeyEvent(true, Enum.KeyCode.LeftControl, false, game)
+    virtualInput:SendKeyEvent(true, Enum.KeyCode.F1, false, game)
     wait(0.1)
-    virtualInput:SendKeyEvent(false, Enum.KeyCode.LeftControl, false, game)
+    virtualInput:SendKeyEvent(false, Enum.KeyCode.F1, false, game)
 end
 
 -- Kết nối sự kiện nhấn nút
